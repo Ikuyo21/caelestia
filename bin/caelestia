@@ -60,7 +60,9 @@ regenerate() {
         matugen color hex "#$(cat "$SEED_FILE")" -m "$(mode)"
         finalize_scheme "$STAGING_FILE" custom "$SCHEME_FILE"
     elif [[ -s "$PATH_FILE" ]]; then
-        matugen image "$(cat "$PATH_FILE")" -m "$(mode)"
+        # --source-color-index 0: matugen >= 4.0 otherwise prompts to pick one
+        # of several extracted colors, which would hang this non-interactive call
+        matugen image "$(cat "$PATH_FILE")" -m "$(mode)" --source-color-index 0
         finalize_scheme "$STAGING_FILE" dynamic "$SCHEME_FILE"
     fi
     # hypr/scheme/current.lua changed; hyprland only watches its main config
@@ -107,7 +109,8 @@ cmd_wallpaper() {
         ;;
     preview)
         [[ -f "$target" ]] || die "no such file: $target"
-        matugen -c "$CONFIG_DIR/matugen/preview.toml" image "$target" -m "$(mode)" >/dev/null 2>&1
+        matugen -c "$CONFIG_DIR/matugen/preview.toml" image "$target" -m "$(mode)" \
+            --source-color-index 0 >/dev/null 2>&1
         finalize_scheme "$PREVIEW_FILE" dynamic
         ;;
     *) die "wallpaper needs one of -f/-r/-p" ;;
