@@ -199,12 +199,12 @@ Approach: follow **end-4/dots-hyprland**'s key choices and patterns where equiva
 1. **Preflight** — confirm Arch Linux, confirm not root, confirm run from repo root
 2. **AUR helper** — `yay`, bootstrap if not present
 3. **Package install**, grouped:
-   - Core/build: `hyprland`, `xdg-desktop-portal-hyprland`, `xdg-desktop-portal-gtk`, `quickshell-git` (AUR), `qt6-base`/`qt6-declarative`/`qt6-shadertools`, `m3shapes` (AUR), `cmake`, `ninja`, `pkg-config`
+   - Core/build: `hyprland`, `xdg-desktop-portal-hyprland`, `xdg-desktop-portal-gtk`, `quickshell-git` (AUR), `qt6-base`/`qt6-declarative`/`qt6-shadertools`, `cmake`, `ninja`, `pkgconf` (no m3shapes package exists — `shell/CMakeLists.txt` fetches it from GitHub via FetchContent during the build)
    - Native plugin build deps: `libqalculate`, `pipewire`, `aubio`, `libcava` (AUR), `fftw`
-   - Shell utilities: `ddcutil`, `brightnessctl`, `lm-sensors`, `swappy`, `wl-clipboard`, `xkeyboard-config`, `cliphist`, `ydotool`, `hyprpicker`
-   - Fonts: `ttf-jetbrains-mono-nerd`, `material-symbols`, `rubik`
-   - Shell/terminal: `fish`, `eza`, `zoxide`, `direnv`, `alacritty`, `fastfetch`, `matugen` (AUR), `btop`, `starship`
-   - Neovim: `neovim`, `git`, `clangd`, `qml-language-server`
+   - Shell utilities: `ddcutil`, `brightnessctl`, `lm_sensors`, `swappy`, `wl-clipboard`, `xkeyboard-config`, `cliphist`, `ydotool`, `hyprpicker`
+   - Fonts: `ttf-jetbrains-mono-nerd`, `ttf-material-symbols-variable-git` (AUR), `ttf-rubik` (AUR)
+   - Shell/terminal: `fish`, `eza`, `zoxide`, `direnv`, `alacritty`, `fastfetch`, `matugen` (in extra since ~v4), `btop`, `starship`
+   - Neovim: `neovim`, `git`, `clang` (clangd ships inside it; no standalone package), `qml-language-server-bin` (AUR)
    - GTK/Qt theming: `adw-gtk-theme`, `papirus-icon-theme`, `papirus-folders`, `darkly-bin`
    - Auth/network/bluetooth: `gnome-keyring`, `polkit-gnome`, `networkmanager`, `bluez`, `bluez-utils`
    - Audio: full `pipewire` stack, `wireplumber`, `pavucontrol`

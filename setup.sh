@@ -35,14 +35,15 @@ fi
 # ---------------------------------------------------------------- 3. packages
 log "installing packages"
 packages=(
-    # Core/build
+    # Core/build (m3shapes is not a package - shell/CMakeLists.txt fetches it
+    # from GitHub via FetchContent during the plugin build)
     hyprland xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
-    quickshell-git qt6-base qt6-declarative qt6-shadertools m3shapes
-    cmake ninja pkg-config
+    quickshell-git qt6-base qt6-declarative qt6-shadertools
+    cmake ninja pkgconf
     # Native plugin build deps
     libqalculate pipewire aubio libcava fftw
     # Shell utilities
-    ddcutil brightnessctl lm-sensors swappy wl-clipboard xkeyboard-config
+    ddcutil brightnessctl lm_sensors swappy wl-clipboard xkeyboard-config
     cliphist ydotool hyprpicker
     # Recording / pickers (the tooling built in this repo: caelestia-record,
     # caelestia-clipboard, caelestia-emoji)
@@ -50,12 +51,12 @@ packages=(
     # Night light (hypr execs.lua)
     gammastep geoclue
     # Fonts
-    ttf-jetbrains-mono-nerd material-symbols rubik
+    ttf-jetbrains-mono-nerd ttf-material-symbols-variable-git ttf-rubik
     noto-fonts noto-fonts-cjk noto-fonts-emoji
     # Shell/terminal
     fish eza zoxide direnv alacritty fastfetch matugen btop starship
-    # Neovim
-    neovim git clangd qml-language-server
+    # Neovim (clangd ships inside clang; no standalone clangd package exists)
+    neovim git clang qml-language-server-bin
     # GTK/Qt theming
     adw-gtk-theme papirus-icon-theme papirus-folders darkly-bin
     # Auth/network/bluetooth
