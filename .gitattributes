@@ -1,0 +1,8 @@
+# Everything in this repo is consumed on Arch - keep LF everywhere,
+# even when the repo is edited from the Windows side of the dual boot.
+* text=auto eol=lf
+*.gif binary
+*.png binary
+*.webp binary
+*.jpg binary
+*.ttf binary
