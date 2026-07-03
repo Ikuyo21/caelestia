@@ -194,5 +194,56 @@ PageBase {
             checked: !Colours.light
             onToggled: Colours.setMode(checked ? "dark" : "light")
         }
+
+        // Appearance sliders (see CLAUDE.md "Corner rounding & blur/transparency"):
+        // all three bind to existing native properties, no new architecture
+        SectionHeader {
+            text: qsTr("Appearance")
+        }
+
+        SliderRow {
+            first: true
+            icon: "rounded_corner"
+            label: qsTr("Corner rounding")
+            valueLabel: `${(+Config.appearance.rounding.scale.toFixed(2))}×`
+            // scale 0-2, default 1; blob waviness (deformScale) stays fixed per spec
+            value: Config.appearance.rounding.scale / 2
+            onMoved: v => GlobalConfig.appearance.rounding.scale = +(v * 2).toFixed(2)
+        }
+
+        SliderRow {
+            icon: "opacity"
+            label: qsTr("Transparency")
+            enabled: Colours.transparency.enabled
+            valueLabel: qsTr("base %1").arg(+Config.appearance.transparency.base.toFixed(2))
+            value: Config.appearance.transparency.base
+            onMoved: v => GlobalConfig.appearance.transparency.base = +v.toFixed(2)
+        }
+
+        SliderRow {
+            id: blurRow
+
+            // Live Hyprland control via the same applyOptions mechanism GameMode
+            // uses. Deliberately NOT persisted by the shell: the lasting default
+            // lives in hypr/variables.lua (blurSize/blurPasses) or the user's
+            // hypr-vars.lua override, and a hyprctl reload restores it.
+            // Initialized from the live compositor value (falls back to
+            // variables.lua's default of 8)
+            property real strength: ((Hypr.options["decoration:blur:size"] ?? 8) / 20) // qmllint disable missing-property
+
+            last: true
+            icon: "blur_on"
+            label: qsTr("Blur (until next Hyprland reload)")
+            valueLabel: qsTr("size %1").arg(Math.round(strength * 20))
+            value: strength
+            onMoved: v => {
+                strength = v;
+                Hypr.extras.applyOptions({
+                    "decoration:blur:enabled": v > 0 ? 1 : 0,
+                    "decoration:blur:size": Math.round(v * 20),
+                    "decoration:blur:passes": 2
+                });
+            }
+        }
     }
 }
