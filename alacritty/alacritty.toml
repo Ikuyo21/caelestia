@@ -1,0 +1,41 @@
+# Alacritty config for the caelestia redesign.
+# Colors come from matugen (same seed as the shell) via the state-file
+# import below; Alacritty live-reloads it, so open terminals recolor when
+# the wallpaper/seed changes. Blur and transparency come entirely from
+# Hyprland (windowrule opacity + compositor blur), NOT from here - keep
+# opacity at 1.0 or the two would multiply.
+
+[general]
+live_config_reload = true
+import = ["~/.local/state/caelestia/alacritty-colors.toml"]
+
+[window]
+decorations = "None"
+dynamic_padding = true
+opacity = 1.0
+
+[window.padding]
+x = 12
+y = 12
+
+[font]
+size = 11.0
+
+[font.normal]
+family = "JetBrainsMono Nerd Font"
+style = "Regular"
+
+[font.bold]
+family = "JetBrainsMono Nerd Font"
+style = "Bold"
+
+[font.italic]
+family = "JetBrainsMono Nerd Font"
+style = "Italic"
+
+[cursor.style]
+shape = "Beam"
+blinking = "On"
+
+[scrolling]
+history = 10000

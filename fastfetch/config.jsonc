@@ -1,0 +1,71 @@
+// fastfetch config for the caelestia redesign.
+// Custom ASCII logo + module layout per spec (system/kernel/shell/uptime/
+// DE-WM/memory/storage/colors), adapted for Arch. Runs on every interactive
+// fish shell start (see fish/config.fish).
+{
+    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    "logo": {
+        "source": "~/.config/fastfetch/logo.txt",
+        "type": "file",
+        "color": {
+            "1": "cyan"
+        },
+        "padding": {
+            "top": 1,
+            "right": 4
+        }
+    },
+    "display": {
+        "separator": "  ",
+        "key": {
+            "width": 12
+        }
+    },
+    "modules": [
+        "break",
+        {
+            "type": "os",
+            "key": "󰣇 system",
+            "keyColor": "cyan",
+            "format": "{pretty-name}"
+        },
+        {
+            "type": "kernel",
+            "key": " kernel",
+            "keyColor": "cyan"
+        },
+        {
+            "type": "shell",
+            "key": " shell",
+            "keyColor": "cyan"
+        },
+        {
+            "type": "uptime",
+            "key": " uptime",
+            "keyColor": "cyan"
+        },
+        {
+            "type": "wm",
+            "key": " de/wm",
+            "keyColor": "cyan"
+        },
+        {
+            "type": "memory",
+            "key": " memory",
+            "keyColor": "cyan"
+        },
+        {
+            "type": "disk",
+            "key": "󰋊 storage",
+            "keyColor": "cyan",
+            "folders": "/"
+        },
+        "break",
+        {
+            "type": "colors",
+            "paddingLeft": 2,
+            "symbol": "circle"
+        },
+        "break"
+    ]
+}
