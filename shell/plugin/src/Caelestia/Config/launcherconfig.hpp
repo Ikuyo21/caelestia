@@ -16,8 +16,6 @@ class LauncherUseFuzzy : public ConfigObject {
 
     CONFIG_GLOBAL_PROPERTY(bool, apps, false)
     CONFIG_GLOBAL_PROPERTY(bool, actions, false)
-    CONFIG_GLOBAL_PROPERTY(bool, schemes, false)
-    CONFIG_GLOBAL_PROPERTY(bool, variants, false)
     CONFIG_GLOBAL_PROPERTY(bool, wallpapers, false)
 
 public:
@@ -50,22 +48,10 @@ class LauncherConfig : public ConfigObject {
                 { u"command"_s, QStringList{ u"autocomplete"_s, u"calc"_s } },
             }),
             vmap({
-                { u"name"_s, u"Scheme"_s },
-                { u"icon"_s, u"palette"_s },
-                { u"description"_s, u"Change the current colour scheme"_s },
-                { u"command"_s, QStringList{ u"autocomplete"_s, u"scheme"_s } },
-            }),
-            vmap({
                 { u"name"_s, u"Wallpaper"_s },
                 { u"icon"_s, u"image"_s },
                 { u"description"_s, u"Change the current wallpaper"_s },
                 { u"command"_s, QStringList{ u"autocomplete"_s, u"wallpaper"_s } },
-            }),
-            vmap({
-                { u"name"_s, u"Variant"_s },
-                { u"icon"_s, u"colors"_s },
-                { u"description"_s, u"Change the current scheme variant"_s },
-                { u"command"_s, QStringList{ u"autocomplete"_s, u"variant"_s } },
             }),
             vmap({
                 { u"name"_s, u"Random"_s },

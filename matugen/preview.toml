@@ -1,0 +1,7 @@
+# matugen preview config - used only by `caelestia wallpaper -p <img>`.
+# Renders just the shell scheme to a throwaway cache path so live wallpaper
+# previews never touch real state or the other templates.
+
+[templates.shell-scheme-preview]
+input_path = '~/.config/matugen/templates/scheme.json'
+output_path = '~/.cache/caelestia/scheme.preview.json'

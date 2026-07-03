@@ -1,0 +1,20 @@
+# matugen config for the caelestia fork - symlinked to ~/.config/matugen/config.toml
+#
+# One pipeline, two modes (see CLAUDE.md "Theming architecture"):
+#   dynamic:        caelestia wallpaper -f <img>  -> matugen image <img>
+#   pick your own:  caelestia scheme set -c <hex> -> matugen color hex <hex>
+# Both render the same templates below, so downstream consumers never know
+# which mode generated the colors.
+#
+# The shell's scheme.json is rendered to a staging path; the `caelestia`
+# wrapper script patches in the name/flavour/mode metadata with jq and
+# moves it to ~/.local/state/caelestia/scheme.json atomically (the shell
+# watches that file). Generated files live under state/, never in this repo.
+
+[templates.shell-scheme]
+input_path = '~/.config/matugen/templates/scheme.json'
+output_path = '~/.cache/caelestia/scheme.staging.json'
+
+[templates.alacritty]
+input_path = '~/.config/matugen/templates/alacritty.toml'
+output_path = '~/.local/state/caelestia/alacritty-colors.toml'

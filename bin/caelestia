@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+# caelestia - minimal drop-in replacement for caelestia-cli, backed by matugen.
+# Implements only the surface this shell fork actually calls:
+#
+#   caelestia wallpaper -f <path> [--no-smart]   set wallpaper (+ dynamic scheme)
+#   caelestia wallpaper -r [--no-smart]          random wallpaper from the walls dir
+#   caelestia wallpaper -p <path> [--no-smart]   print preview scheme json to stdout
+#   caelestia scheme set [-m dark|light] [-c <hex>] [-w] [--notify]
+#       -m  switch mode and regenerate
+#       -c  "pick your own": derive palette from a seed color instead of the wallpaper
+#       -w  back to wallpaper-dynamic colors
+#   caelestia shell <target> <function> [args...]  -> qs -c caelestia ipc call ...
+#
+# State (all under XDG dirs, never in the dotfiles repo):
+#   wallpaper/path.txt  current wallpaper (watched by the shell)
+#   scheme-mode.txt     dark|light
+#   scheme-seed.txt     seed hex when in pick-your-own mode (absent = dynamic)
+#   scheme.json         the palette the shell watches (schema of Colours.qml)
+
+set -euo pipefail
+
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/caelestia"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/caelestia"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+WALLS_DIR="${CAELESTIA_WALLS_DIR:-$HOME/Pictures/Wallpapers}"
+
+PATH_FILE="$STATE_DIR/wallpaper/path.txt"
+MODE_FILE="$STATE_DIR/scheme-mode.txt"
+SEED_FILE="$STATE_DIR/scheme-seed.txt"
+SCHEME_FILE="$STATE_DIR/scheme.json"
+STAGING_FILE="$CACHE_DIR/scheme.staging.json"
+PREVIEW_FILE="$CACHE_DIR/scheme.preview.json"
+
+die() {
+    echo "caelestia: $*" >&2
+    exit 1
+}
+
+mode() {
+    cat "$MODE_FILE" 2>/dev/null || echo dark
+}
+
+# finalize_scheme <staging file> <name> [dest]
+# Patch metadata into a rendered template. With no dest, print to stdout.
+finalize_scheme() {
+    local staging="$1" name="$2" dest="${3:-}"
+    local patched
+    patched="$(jq --arg name "$name" --arg mode "$(mode)" \
+        '.name = $name | .flavour = "" | .mode = $mode' "$staging")"
+    if [[ -n "$dest" ]]; then
+        printf '%s\n' "$patched" > "$dest.tmp" && mv "$dest.tmp" "$dest"
+    else
+        printf '%s\n' "$patched"
+    fi
+}
+
+# regenerate colors + all templates from current seed or wallpaper
+regenerate() {
+    if [[ -s "$SEED_FILE" ]]; then
+        matugen color hex "#$(cat "$SEED_FILE")" -m "$(mode)"
+        finalize_scheme "$STAGING_FILE" custom "$SCHEME_FILE"
+    elif [[ -s "$PATH_FILE" ]]; then
+        matugen image "$(cat "$PATH_FILE")" -m "$(mode)"
+        finalize_scheme "$STAGING_FILE" dynamic "$SCHEME_FILE"
+    fi
+}
+
+cmd_wallpaper() {
+    mkdir -p "$STATE_DIR/wallpaper" "$CACHE_DIR"
+
+    local action="" target=""
+    while (($#)); do
+        case "$1" in
+        -f)
+            action=set
+            target="$2"
+            shift 2
+            ;;
+        -r)
+            action=random
+            shift
+            ;;
+        -p)
+            action=preview
+            target="$2"
+            shift 2
+            ;;
+        --no-smart) shift ;; # accepted for compat; mode comes from scheme-mode.txt
+        *) die "unknown wallpaper argument: $1" ;;
+        esac
+    done
+
+    case "$action" in
+    set | random)
+        if [[ "$action" == random ]]; then
+            target="$(find "$WALLS_DIR" -type f \
+                \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) \
+                2>/dev/null | shuf -n1)" || true
+            [[ -n "$target" ]] || die "no wallpapers found in $WALLS_DIR"
+        fi
+        [[ -f "$target" ]] || die "no such file: $target"
+        printf '%s' "$target" > "$PATH_FILE" # the shell watches this and draws it
+        if [[ -s "$SEED_FILE" ]]; then
+            : # pick-your-own mode: wallpaper changes, palette stays seed-derived
+        else
+            matugen image "$target" -m "$(mode)"
+            finalize_scheme "$STAGING_FILE" dynamic "$SCHEME_FILE"
+        fi
+        ;;
+    preview)
+        [[ -f "$target" ]] || die "no such file: $target"
+        matugen -c "$CONFIG_DIR/matugen/preview.toml" image "$target" -m "$(mode)" >/dev/null 2>&1
+        finalize_scheme "$PREVIEW_FILE" dynamic
+        ;;
+    *) die "wallpaper needs one of -f/-r/-p" ;;
+    esac
+}
+
+cmd_scheme() {
+    [[ "${1:-}" == set ]] || die "only 'scheme set' is supported"
+    shift
+    mkdir -p "$STATE_DIR" "$CACHE_DIR"
+
+    local notify=false
+    while (($#)); do
+        case "$1" in
+        -m)
+            case "$2" in dark | light) ;; *) die "mode must be dark or light" ;; esac
+            printf '%s' "$2" > "$MODE_FILE"
+            shift 2
+            ;;
+        -c)
+            printf '%s' "${2#\#}" > "$SEED_FILE"
+            shift 2
+            ;;
+        -w)
+            rm -f "$SEED_FILE"
+            shift
+            ;;
+        --notify)
+            notify=true
+            shift
+            ;;
+        *) die "unknown scheme argument: $1" ;;
+        esac
+    done
+
+    regenerate
+    if $notify && command -v notify-send >/dev/null; then
+        notify-send -a caelestia -u low "Scheme changed" \
+            "$(mode) mode, $([[ -s "$SEED_FILE" ]] && echo "seed #$(cat "$SEED_FILE")" || echo "wallpaper colors")"
+    fi
+}
+
+case "${1:-}" in
+wallpaper)
+    shift
+    cmd_wallpaper "$@"
+    ;;
+scheme)
+    shift
+    cmd_scheme "$@"
+    ;;
+shell)
+    shift
+    exec qs -c caelestia ipc call "$@"
+    ;;
+*)
+    die "usage: caelestia {wallpaper|scheme|shell} ... (matugen-backed replacement for caelestia-cli)"
+    ;;
+esac
