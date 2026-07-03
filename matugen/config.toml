@@ -24,3 +24,7 @@ output_path = '~/.local/state/caelestia/alacritty-colors.toml'
 [templates.hypr-scheme]
 input_path = '~/.config/matugen/templates/hypr-scheme.lua'
 output_path = '~/.config/hypr/scheme/current.lua'
+
+[templates.nvim]
+input_path = '~/.config/matugen/templates/nvim.lua'
+output_path = '~/.local/state/caelestia/nvim-colors.lua'
