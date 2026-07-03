@@ -1,5 +1,7 @@
-# Claude Code local runtime state
+# Claude Code local runtime state + marketplace skill installs (re-installable, not dotfiles)
 .claude/
+.agents/
+skills-lock.json
 
 # Quickshell manages this next to shell.qml; machine-specific (see CLAUDE.md)
 .qmlls.ini
