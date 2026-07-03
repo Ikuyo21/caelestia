@@ -63,6 +63,8 @@ regenerate() {
         matugen image "$(cat "$PATH_FILE")" -m "$(mode)"
         finalize_scheme "$STAGING_FILE" dynamic "$SCHEME_FILE"
     fi
+    # hypr/scheme/current.lua changed; hyprland only watches its main config
+    [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && hyprctl reload >/dev/null 2>&1 || true
 }
 
 cmd_wallpaper() {
@@ -100,12 +102,8 @@ cmd_wallpaper() {
         fi
         [[ -f "$target" ]] || die "no such file: $target"
         printf '%s' "$target" > "$PATH_FILE" # the shell watches this and draws it
-        if [[ -s "$SEED_FILE" ]]; then
-            : # pick-your-own mode: wallpaper changes, palette stays seed-derived
-        else
-            matugen image "$target" -m "$(mode)"
-            finalize_scheme "$STAGING_FILE" dynamic "$SCHEME_FILE"
-        fi
+        # pick-your-own mode: wallpaper changes, palette stays seed-derived
+        [[ -s "$SEED_FILE" ]] || regenerate
         ;;
     preview)
         [[ -f "$target" ]] || die "no such file: $target"
@@ -163,6 +161,11 @@ scheme)
     ;;
 shell)
     shift
+    # `caelestia shell -d` style daemon flags go straight to qs; anything
+    # else is an ipc call against the running shell
+    if [[ "${1:-}" == -* ]]; then
+        exec qs -c caelestia "$@"
+    fi
     exec qs -c caelestia ipc call "$@"
     ;;
 *)

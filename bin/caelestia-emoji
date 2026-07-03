@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# caelestia-emoji - emoji picker: curated list -> fuzzel -> clipboard.
+# The list lives in the repo at data/emoji.txt (resolved through this
+# script's own symlink, so it works wherever the repo is checked out).
+
+set -euo pipefail
+
+list="$(dirname "$(realpath "$0")")/../data/emoji.txt"
+[[ -f "$list" ]] || { echo "caelestia-emoji: missing $list" >&2; exit 1; }
+
+sel="$(fuzzel --dmenu --prompt 'emoji > ' < "$list")" || exit 0
+printf '%s' "${sel%% *}" | wl-copy

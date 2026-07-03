@@ -93,18 +93,6 @@ StyledRect {
                         text: qsTr("Record region")
                         activeText: qsTr("Region")
                         onClicked: Recorder.start(["-r"])
-                    },
-                    MenuItem {
-                        icon: "select_to_speak"
-                        text: qsTr("Record fullscreen with sound")
-                        activeText: qsTr("Fullscreen")
-                        onClicked: Recorder.start(["-s"])
-                    },
-                    MenuItem {
-                        icon: "volume_up"
-                        text: qsTr("Record region with sound")
-                        activeText: qsTr("Region")
-                        onClicked: Recorder.start(["-sr"])
                     }
                 ]
             }

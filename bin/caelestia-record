@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# caelestia-record - screen recording via wf-recorder + slurp.
+# Two modes per spec (fullscreen, region), replacing caelestia-cli's
+# gpu-screen-recorder integration. The shell's Recorder service and the
+# CTRL+ALT+R / SUPER+SHIFT+ALT+R binds call this.
+#
+#   caelestia-record       toggle fullscreen recording of the focused monitor
+#   caelestia-record -r    select a region with slurp, record it (or stop)
+#   caelestia-record -p    toggle pause (wf-recorder SIGUSR1)
+
+set -euo pipefail
+
+notify() {
+    command -v notify-send >/dev/null && notify-send -a caelestia -u low "$@" || true
+}
+
+if [[ "${1:-}" == "-p" ]]; then
+    pkill -USR1 -x wf-recorder 2>/dev/null && notify "Recording" "Pause toggled"
+    exit 0
+fi
+
+if pgrep -x wf-recorder >/dev/null; then
+    pkill -INT -x wf-recorder
+    notify "Recording stopped" "Saved to $(cat "${XDG_RUNTIME_DIR:-/tmp}/caelestia-record-path" 2>/dev/null || echo Videos/Recordings)"
+    exit 0
+fi
+
+rec_dir="$(xdg-user-dir VIDEOS 2>/dev/null || echo "$HOME/Videos")/Recordings"
+mkdir -p "$rec_dir"
+out="$rec_dir/recording_$(date +%Y%m%d_%H%M%S).mp4"
+printf '%s' "$out" > "${XDG_RUNTIME_DIR:-/tmp}/caelestia-record-path"
+
+if [[ "${1:-}" == "-r" ]]; then
+    region="$(slurp)" || exit 1
+    wf-recorder -g "$region" -f "$out" >/dev/null 2>&1 &
+else
+    monitor="$(hyprctl -j activeworkspace | jq -r '.monitor')"
+    wf-recorder -o "$monitor" -f "$out" >/dev/null 2>&1 &
+fi
+disown
+notify "Recording started" "$out"

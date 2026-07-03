@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# caelestia-clipboard - clipboard history via cliphist, fronted by fuzzel.
+#   caelestia-clipboard      pick an entry -> copy it
+#   caelestia-clipboard -d   pick an entry -> delete it from history
+
+set -euo pipefail
+
+if [[ "${1:-}" == "-d" ]]; then
+    sel="$(cliphist list | fuzzel --dmenu --prompt 'del > ')" || exit 0
+    printf '%s' "$sel" | cliphist delete
+else
+    sel="$(cliphist list | fuzzel --dmenu --prompt 'clip > ')" || exit 0
+    printf '%s' "$sel" | cliphist decode | wl-copy
+fi

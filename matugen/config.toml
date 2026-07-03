@@ -18,3 +18,9 @@ output_path = '~/.cache/caelestia/scheme.staging.json'
 [templates.alacritty]
 input_path = '~/.config/matugen/templates/alacritty.toml'
 output_path = '~/.local/state/caelestia/alacritty-colors.toml'
+
+# Writes through the ~/.config/hypr symlink into the repo checkout;
+# hypr/scheme/current.lua is gitignored for exactly that reason.
+[templates.hypr-scheme]
+input_path = '~/.config/matugen/templates/hypr-scheme.lua'
+output_path = '~/.config/hypr/scheme/current.lua'
