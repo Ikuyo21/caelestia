@@ -30,78 +30,52 @@ StyledRect {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         anchors.margins: Tokens.padding.extraLarge
-        spacing: 0
+        spacing: Tokens.spacing.small
 
         RowLayout {
-            id: row
+            spacing: Tokens.spacing.small
 
-            Layout.alignment: Qt.AlignHCenter
-            spacing: Tokens.spacing.large
-
-            CircularProgress {
-                fgColour: root.accent
-                value: root.percentage
-                implicitSize: usageColumn.implicitHeight + thickness + Tokens.padding.large * 2
-                startAngle: -225
-                sweepAngle: 270
-
-                Behavior on clampedVal {
-                    Anim {}
-                }
-
-                ColumnLayout {
-                    id: usageColumn
-
-                    anchors.centerIn: parent
-                    spacing: 0
-
-                    MaterialIcon {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: "hard_drive"
-                        color: root.accent
-                        fontStyle: Tokens.font.icon.medium
-                    }
-
-                    StyledText {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: Math.round(root.percentage * 100) + "%"
-                        font: Tokens.font.title.builders.large.width(90).build()
-                        color: root.accent
-                    }
-
-                    StyledText {
-                        Layout.alignment: Qt.AlignHCenter
-                        text: qsTr("Used")
-                        font: Tokens.font.body.small
-                        color: Colours.palette.m3onSurfaceVariant
-                    }
-                }
+            MaterialIcon {
+                text: "hard_drive"
+                color: root.accent
+                fontStyle: Tokens.font.icon.medium
             }
 
-            ColumnLayout {
-                Layout.minimumWidth: Tokens.sizes.dashboard.perfStorageTextWidth
-                spacing: Tokens.spacing.extraSmall
+            StyledText {
+                Layout.fillWidth: true
+                text: qsTr("Storage")
+                font: Tokens.font.title.medium
+            }
 
-                StyledText {
-                    text: qsTr("Storage")
-                    font: Tokens.font.title.medium
-                }
-
-                StyledText {
-                    text: {
-                        if (!Storage.primaryDisk)
-                            return qsTr("No disks detected");
-
-                        const fmt = UsageFmt.formatKib(Storage.primaryDisk.used, Storage.primaryDisk.total);
-                        return `${+fmt.value.toFixed(1)} / ${+fmt.total.toFixed(1)} ${fmt.unit}`;
-                    }
-                    font: Tokens.font.body.large
-                    color: root.accent
-                }
+            StyledText {
+                text: Math.round(root.percentage * 100) + "%"
+                font: Tokens.font.title.builders.large.width(90).build()
+                color: root.accent
             }
         }
 
+        StyledProgressBar {
+            Layout.fillWidth: true
+            value: root.percentage
+            implicitHeight: Tokens.padding.small
+            fgColour: root.accent
+        }
+
+        StyledText {
+            Layout.alignment: Qt.AlignHCenter
+            text: {
+                if (!Storage.primaryDisk)
+                    return qsTr("No disks detected");
+
+                const fmt = UsageFmt.formatKib(Storage.primaryDisk.used, Storage.primaryDisk.total);
+                return `${+fmt.value.toFixed(1)} / ${+fmt.total.toFixed(1)} ${fmt.unit}`;
+            }
+            font: Tokens.font.body.medium
+            color: root.accent
+        }
+
         SplitButton {
+            Layout.topMargin: Tokens.spacing.small
             Layout.alignment: Qt.AlignHCenter
 
             type: SplitButton.Tonal
@@ -109,7 +83,7 @@ StyledRect {
             fallbackIcon: "storage"
             fallbackText: qsTr("No disks")
             menuOnTop: true
-            minLeftWidth: row.implicitWidth * 0.6
+            minLeftWidth: layout.width * 0.6
 
             menuItems: disks.instances
             active: menuItems.find(m => m.modelData === Storage.primaryDisk) ?? menuItems[0] ?? null

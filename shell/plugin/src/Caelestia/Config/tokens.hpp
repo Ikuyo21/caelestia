@@ -175,8 +175,6 @@ class DashboardTokens : public ConfigObject {
     Q_OBJECT
     QML_ANONYMOUS
 
-    CONFIG_PROPERTY(int, tabIndicatorHeight, 3)
-    CONFIG_PROPERTY(int, tabIndicatorSpacing, 5)
     CONFIG_PROPERTY(int, userWidth, 340)
     CONFIG_PROPERTY(int, logoSize, 30)
     CONFIG_PROPERTY(int, uptimeSize, 30)
@@ -184,14 +182,7 @@ class DashboardTokens : public ConfigObject {
     CONFIG_PROPERTY(int, mediaWidth, 200)
     CONFIG_PROPERTY(int, mediaProgressSweep, 180)
     CONFIG_PROPERTY(int, mediaProgressThickness, 6)
-    CONFIG_PROPERTY(int, resourceProgressThickness, 6)
-    CONFIG_PROPERTY(int, mediaCoverArtSize, 200)
-    CONFIG_PROPERTY(int, mediaTabWidth, 1000)
-    CONFIG_PROPERTY(int, mediaTabHeight, 320)
-    CONFIG_PROPERTY(int, mediaSectionWidth, 300)
     CONFIG_PROPERTY(int, perfHeroCardWidth, 400)
-    CONFIG_PROPERTY(int, perfUsageShapeSize, 100)
-    CONFIG_PROPERTY(int, perfStorageTextWidth, 160)
     CONFIG_PROPERTY(int, perfNetworkCardWidth, 390)
     CONFIG_PROPERTY(int, perfNetworkCardHeight, 220)
     CONFIG_PROPERTY(int, perfBattWidth, 150)

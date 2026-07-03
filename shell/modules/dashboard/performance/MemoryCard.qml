@@ -24,8 +24,11 @@ StyledRect {
     ColumnLayout {
         id: layout
 
-        anchors.centerIn: parent
-        spacing: Tokens.spacing.extraSmall
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.margins: Tokens.padding.extraLargeIncreased
+        spacing: Tokens.spacing.small
 
         RowLayout {
             Layout.leftMargin: -Tokens.padding.extraSmall
@@ -39,46 +42,23 @@ StyledRect {
             }
 
             StyledText {
+                Layout.fillWidth: true
                 text: qsTr("Memory")
                 font: Tokens.font.title.medium
             }
+
+            StyledText {
+                text: Math.round(Memory.percentage * 100) + "%"
+                font: Tokens.font.title.builders.large.width(90).build()
+                color: root.accent
+            }
         }
 
-        CircularProgress {
-            Layout.topMargin: Tokens.spacing.large
-            Layout.alignment: Qt.AlignHCenter
-            implicitSize: usageColumn.implicitHeight + thickness + Tokens.padding.largeIncreased * 2
-            startAngle: -225
-            sweepAngle: 270
-
-            fgColour: root.accent
+        StyledProgressBar {
+            Layout.fillWidth: true
             value: Memory.percentage
-
-            Behavior on clampedVal {
-                Anim {}
-            }
-
-            ColumnLayout {
-                id: usageColumn
-
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: Tokens.padding.extraSmall
-                spacing: 0
-
-                StyledText {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: Math.round(Memory.percentage * 100) + "%"
-                    font: Tokens.font.title.builders.large.width(90).build()
-                    color: root.accent
-                }
-
-                StyledText {
-                    Layout.alignment: Qt.AlignHCenter
-                    text: qsTr("Used")
-                    font: Tokens.font.body.small
-                    color: Colours.palette.m3onSurfaceVariant
-                }
-            }
+            implicitHeight: Tokens.padding.small
+            fgColour: root.accent
         }
 
         StyledText {

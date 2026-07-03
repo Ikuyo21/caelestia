@@ -26,7 +26,6 @@ class DashboardConfig : public ConfigObject {
 
     CONFIG_PROPERTY(bool, enabled, true)
     CONFIG_PROPERTY(bool, showOnHover, true)
-    CONFIG_PROPERTY(bool, showDashboard, true)
     CONFIG_PROPERTY(bool, showMedia, true)
     CONFIG_PROPERTY(bool, showPerformance, true)
     CONFIG_GLOBAL_PROPERTY(int, mediaUpdateInterval, 500)

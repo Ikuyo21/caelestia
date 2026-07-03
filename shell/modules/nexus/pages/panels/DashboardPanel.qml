@@ -38,19 +38,13 @@ PageBase {
             onToggled: GlobalConfig.dashboard.showOnHover = checked
         }
 
-        // Tabs
+        // Widgets
         SectionHeader {
-            text: qsTr("Tabs")
+            text: qsTr("Widgets")
         }
 
         ToggleRow {
             first: true
-            text: qsTr("Dashboard")
-            checked: Config.dashboard.showDashboard
-            onToggled: GlobalConfig.dashboard.showDashboard = checked
-        }
-
-        ToggleRow {
             text: qsTr("Media")
             checked: Config.dashboard.showMedia
             onToggled: GlobalConfig.dashboard.showMedia = checked

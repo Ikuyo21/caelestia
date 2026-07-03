@@ -15,8 +15,6 @@ qml_module(caelestia-services
         memory.cpp
         diskinfo.cpp
         storage.cpp
-        lyriccandidate.cpp
-        lyrics.cpp
         sessionmanager.cpp
     LIBRARIES
         Qt::DBus

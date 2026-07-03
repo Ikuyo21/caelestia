@@ -1,89 +1,66 @@
 import "dash"
+import QtQuick
 import QtQuick.Layouts
 import Caelestia.Config
 import qs.components
 import qs.components.filedialog
 import qs.services
 
-GridLayout {
+ColumnLayout {
     id: root
 
     required property DrawerVisibilities visibilities
-    required property DashboardState dashState
     required property FileDialog facePicker
 
-    rowSpacing: Tokens.spacing.medium
-    columnSpacing: Tokens.spacing.medium
+    spacing: Tokens.spacing.medium
 
-    Rect {
-        Layout.column: 2
-        Layout.columnSpan: 3
-        Layout.preferredWidth: Tokens.sizes.dashboard.userWidth
-        Layout.fillHeight: true
+    RowLayout {
+        // Media drives the strip height even when hidden, so toggling it
+        // doesn't collapse the user/clock cards
+        Layout.preferredHeight: media.implicitHeight
+        spacing: Tokens.spacing.medium
 
-        radius: Tokens.rounding.extraLarge
+        Rect {
+            Layout.preferredWidth: dateTime.implicitWidth
+            Layout.fillHeight: true
 
-        User {
-            id: user
+            radius: Tokens.rounding.large
 
-            visibilities: root.visibilities
-            facePicker: root.facePicker
+            DateTime {
+                id: dateTime
+            }
+        }
+
+        Rect {
+            Layout.preferredWidth: Tokens.sizes.dashboard.userWidth
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            radius: Tokens.rounding.extraLarge
+
+            User {
+                visibilities: root.visibilities
+                facePicker: root.facePicker
+            }
+        }
+
+        Rect {
+            visible: Config.dashboard.showMedia
+            Layout.preferredWidth: media.implicitWidth
+            Layout.fillHeight: true
+
+            radius: Tokens.rounding.extraLarge * 2
+
+            Media {
+                id: media
+            }
         }
     }
 
-    Rect {
-        Layout.row: 1
-        Layout.preferredWidth: dateTime.implicitWidth
-        Layout.fillHeight: true
-
-        radius: Tokens.rounding.large
-
-        DateTime {
-            id: dateTime
-        }
-    }
-
-    Rect {
-        Layout.row: 1
-        Layout.column: 1
-        Layout.columnSpan: 3
+    Performance {
+        visible: Config.dashboard.showPerformance
         Layout.fillWidth: true
-        Layout.preferredHeight: calendar.implicitHeight
-
-        radius: Tokens.rounding.extraLarge
-
-        Calendar {
-            id: calendar
-
-            dashState: root.dashState
-        }
-    }
-
-    Rect {
-        Layout.row: 1
-        Layout.column: 4
-        Layout.preferredWidth: resources.implicitWidth
-        Layout.fillHeight: true
-
-        radius: Tokens.rounding.large
-
-        Resources {
-            id: resources
-        }
-    }
-
-    Rect {
-        Layout.row: 0
-        Layout.column: 5
-        Layout.rowSpan: 2
-        Layout.preferredWidth: media.implicitWidth
-        Layout.fillHeight: true
-
-        radius: Tokens.rounding.extraLarge * 2
-
-        Media {
-            id: media
-        }
+        Layout.preferredHeight: implicitHeight
     }
 
     component Rect: StyledRect {

@@ -23,6 +23,9 @@ Item {
     anchors.top: parent.top
     anchors.bottom: parent.bottom
     implicitWidth: Tokens.sizes.dashboard.mediaWidth
+    // Nothing stretches this cell in the fused layout, so report our own
+    // height: the anchored content chain plus a fixed allotment for the gif
+    implicitHeight: controls.y + controls.height + Tokens.sizes.dashboard.mediaWidth / 2
 
     Behavior on playerProgress {
         Anim {
