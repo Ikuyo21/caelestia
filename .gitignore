@@ -1,0 +1,11 @@
+# Claude Code local runtime state
+.claude/
+
+# Quickshell manages this next to shell.qml; machine-specific (see CLAUDE.md)
+.qmlls.ini
+
+# CMake build output
+shell/build/
+
+# Reference clones / scratch (never committed)
+_upstream/
