@@ -1,3 +1,12 @@
+> [!IMPORTANT]
+> **Fork notice** — this is a trimmed personal fork; the README below is
+> upstream's and documents features this fork removed: weather, the
+> dashboard's tabs/calendar/lyrics system, nexus deep-settings pages, the
+> launcher scheme/variant pickers, special workspaces, and everything
+> involving `caelestia-cli` (replaced by the matugen-backed wrapper in
+> `../bin/caelestia`). Config keys for removed features no longer exist.
+> See the [repo root README](../README.md) for what this fork actually is.
+
 <h1 align=center>caelestia-shell</h1>
 
 <div align=center>
