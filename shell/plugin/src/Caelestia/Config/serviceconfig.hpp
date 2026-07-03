@@ -13,10 +13,6 @@ class ServiceConfig : public ConfigObject {
     Q_OBJECT
     QML_ANONYMOUS
 
-    // Guess based on locale
-    CONFIG_GLOBAL_PROPERTY(bool, useFahrenheit,
-        QLocale().measurementSystem() == QLocale::ImperialUSSystem ||
-            QLocale().measurementSystem() == QLocale::ImperialUKSystem)
     // This is always false by default cause apparently even imperial system users don't use it for perf temps?
     CONFIG_GLOBAL_PROPERTY(bool, useFahrenheitPerformance, false)
     // Attempt to guess based on locale
