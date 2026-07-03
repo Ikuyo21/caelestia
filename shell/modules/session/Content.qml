@@ -6,9 +6,7 @@ import Caelestia
 import Caelestia.Config
 import Caelestia.Services
 import qs.components
-import qs.components.controls
 import qs.services
-import qs.utils
 
 Column {
     id: root
@@ -17,12 +15,19 @@ Column {
 
     padding: Tokens.padding.large
     rightPadding: CUtils.clamp(padding - Config.border.thickness, 0, padding)
-    spacing: Tokens.spacing.large
+    spacing: Tokens.spacing.small
 
-    SessionButton {
+    StyledText {
+        text: qsTr("[ Session ]")
+        color: Colours.palette.m3primary
+        font: Tokens.font.title.medium
+        bottomPadding: Tokens.spacing.medium
+    }
+
+    SessionEntry {
         id: logout
 
-        icon: Config.session.icons.logout
+        label: qsTr("Logout")
         command: Config.session.commands.logout
 
         KeyNavigation.down: shutdown
@@ -39,50 +44,39 @@ Column {
         }
     }
 
-    SessionButton {
+    SessionEntry {
         id: shutdown
 
-        icon: Config.session.icons.shutdown
+        label: qsTr("Shutdown")
         command: Config.session.commands.shutdown
 
         KeyNavigation.up: logout
         KeyNavigation.down: hibernate
     }
 
-    AnimatedImage {
-        width: Tokens.sizes.session.button
-        height: Tokens.sizes.session.button
-        sourceSize.width: width * ((QsWindow.window as QsWindow)?.devicePixelRatio ?? 1)
-
-        playing: visible
-        asynchronous: true
-        speed: Config.general.sessionGifSpeed
-        source: Paths.absolutePath(Config.paths.sessionGif)
-        fillMode: AnimatedImage.PreserveAspectFit
-    }
-
-    SessionButton {
+    SessionEntry {
         id: hibernate
 
-        icon: Config.session.icons.hibernate
+        label: qsTr("Hibernate")
         command: Config.session.commands.hibernate
 
         KeyNavigation.up: shutdown
         KeyNavigation.down: reboot
     }
 
-    SessionButton {
+    SessionEntry {
         id: reboot
 
-        icon: Config.session.icons.reboot
+        label: qsTr("Reboot")
         command: Config.session.commands.reboot
 
         KeyNavigation.up: hibernate
     }
 
-    component SessionButton: IconButton {
-        id: button
+    component SessionEntry: StyledRect {
+        id: entry
 
+        required property string label
         required property list<string> command
 
         function exec(): void {
@@ -90,14 +84,56 @@ Column {
                 Quickshell.execDetached(command);
         }
 
-        implicitWidth: Tokens.sizes.session.button
-        implicitHeight: Tokens.sizes.session.button
+        implicitWidth: Tokens.sizes.session.width
+        implicitHeight: text.implicitHeight + Tokens.padding.large * 2
 
-        inactiveColour: activeFocus ? Colours.palette.m3secondaryContainer : Colours.tPalette.m3surfaceContainer
-        inactiveOnColour: activeFocus ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurface
-        radius: pressed ? Tokens.rounding.medium : activeFocus ? Tokens.rounding.extraLarge : Tokens.rounding.largeIncreased
-        font: Tokens.font.icon.builders.large.scale(1.3).build()
-        onClicked: exec()
+        radius: stateLayer.pressed ? Tokens.rounding.medium : Tokens.rounding.large
+        color: activeFocus ? Colours.palette.m3secondaryContainer : Colours.tPalette.m3surfaceContainer
+
+        RadiusBehavior on radius {}
+
+        // Highlight bar on the focused entry
+        StyledRect {
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.leftMargin: Tokens.padding.small
+
+            implicitWidth: entry.activeFocus ? Tokens.padding.extraSmall : 0
+            implicitHeight: entry.height - Tokens.padding.medium * 2
+
+            radius: Tokens.rounding.full
+            color: Colours.palette.m3primary
+
+            Behavior on implicitWidth {
+                Anim {
+                    type: Anim.FastSpatial
+                }
+            }
+        }
+
+        StyledText {
+            id: text
+
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.leftMargin: Tokens.padding.extraLarge
+
+            text: entry.label
+            color: entry.activeFocus ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurface
+            font: Tokens.font.body.large
+        }
+
+        StateLayer {
+            id: stateLayer
+
+            anchors.fill: parent
+            radius: parent.radius
+
+            onClicked: {
+                entry.forceActiveFocus();
+                entry.exec();
+            }
+        }
 
         Keys.onEnterPressed: exec()
         Keys.onReturnPressed: exec()
@@ -123,6 +159,12 @@ Column {
                     event.accepted = true;
                 }
             }
+        }
+    }
+
+    component RadiusBehavior: Behavior {
+        Anim {
+            type: Anim.DefaultEffects
         }
     }
 }

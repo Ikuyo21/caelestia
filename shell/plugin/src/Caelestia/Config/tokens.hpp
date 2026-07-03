@@ -238,7 +238,7 @@ class SessionTokens : public ConfigObject {
     Q_OBJECT
     QML_ANONYMOUS
 
-    CONFIG_PROPERTY(int, button, 80)
+    CONFIG_PROPERTY(int, width, 220)
 
 public:
     explicit SessionTokens(QObject* parent = nullptr)

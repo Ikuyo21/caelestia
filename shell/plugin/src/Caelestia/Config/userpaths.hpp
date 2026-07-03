@@ -16,7 +16,6 @@ class UserPaths : public ConfigObject {
 
     CONFIG_GLOBAL_PROPERTY(
         QString, wallpaperDir, QStandardPaths::writableLocation(QStandardPaths::PicturesLocation) + u"/Wallpapers"_s)
-    CONFIG_PROPERTY(QString, sessionGif, u"root:/assets/kurukuru.gif"_s)
     CONFIG_PROPERTY(QString, mediaGif, u"root:/assets/bongocat.gif"_s)
     CONFIG_PROPERTY(QString, noNotifsPic, u"root:/assets/dino.png"_s)
     CONFIG_PROPERTY(QString, lockNoNotifsPic, u"root:/assets/dino.png"_s)

@@ -18,7 +18,7 @@ Item {
     visible: offsetScale < 1
     anchors.rightMargin: (-implicitWidth - 5 - sidebarOffset) * offsetScale
     implicitWidth: content.implicitWidth
-    implicitHeight: content.implicitHeight || 510 // Hard coded fallback for first open
+    implicitHeight: content.implicitHeight || 300 // Hard coded fallback for first open
     opacity: 1 - offsetScale
 
     Behavior on offsetScale {

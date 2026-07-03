@@ -93,7 +93,6 @@ class GeneralConfig : public ConfigObject {
     CONFIG_GLOBAL_PROPERTY(QString, logo)
     CONFIG_PROPERTY(bool, showOverFullscreen, false)
     CONFIG_PROPERTY(qreal, mediaGifSpeedAdjustment, 300)
-    CONFIG_PROPERTY(qreal, sessionGifSpeed, 0.7)
     CONFIG_SUBOBJECT(GeneralApps, apps)
     CONFIG_SUBOBJECT(GeneralIdle, idle)
     CONFIG_SUBOBJECT(GeneralBattery, battery)
