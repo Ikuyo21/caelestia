@@ -19,12 +19,6 @@ RowLayout {
             Layout.fillWidth: true
             rootHeight: root.height
         }
-
-        Media {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            lock: root.lock
-        }
     }
 
     Center {
