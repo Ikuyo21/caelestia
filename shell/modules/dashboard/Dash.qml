@@ -32,19 +32,6 @@ GridLayout {
     }
 
     Rect {
-        Layout.row: 0
-        Layout.columnSpan: 2
-        Layout.preferredWidth: Tokens.sizes.dashboard.weatherWidth
-        Layout.preferredHeight: weather.implicitHeight
-
-        radius: Tokens.rounding.extraLarge * 1.5
-
-        SmallWeather {
-            id: weather
-        }
-    }
-
-    Rect {
         Layout.row: 1
         Layout.preferredWidth: dateTime.implicitWidth
         Layout.fillHeight: true
