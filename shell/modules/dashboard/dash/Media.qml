@@ -24,8 +24,8 @@ Item {
     anchors.bottom: parent.bottom
     implicitWidth: Tokens.sizes.dashboard.mediaWidth
     // Nothing stretches this cell in the fused layout, so report our own
-    // height: the anchored content chain plus a fixed allotment for the gif
-    implicitHeight: controls.y + controls.height + Tokens.sizes.dashboard.mediaWidth / 2
+    // height: the anchored content chain plus its bottom padding
+    implicitHeight: controls.y + controls.height + Tokens.padding.large
 
     Behavior on playerProgress {
         Anim {
@@ -39,10 +39,6 @@ Item {
         triggeredOnStart: true
         repeat: true
         onTriggered: Players.active?.positionChanged()
-    }
-
-    ServiceRef {
-        service: Audio.beatTracker
     }
 
     CircularProgress {
@@ -161,23 +157,5 @@ Item {
             disabled: !Players.active?.canGoNext
             onClicked: Players.active?.next()
         }
-    }
-
-    AnimatedImage {
-        id: bongocat
-
-        anchors.top: controls.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.topMargin: Tokens.spacing.small
-        anchors.bottomMargin: Tokens.padding.large
-        anchors.margins: Tokens.padding.extraLargeIncreased
-
-        playing: Players.active?.isPlaying ?? false
-        speed: Audio.beatTracker.bpm / Config.general.mediaGifSpeedAdjustment // qmllint disable unresolved-type
-        source: Paths.absolutePath(Config.paths.mediaGif)
-        asynchronous: true
-        fillMode: AnimatedImage.PreserveAspectFit
     }
 }

@@ -340,8 +340,6 @@ For example, to disable the bar on DP-1:
     "general": {
         "logo": "",
         "showOverFullscreen": false,
-        "mediaGifSpeedAdjustment": 300,
-        "sessionGifSpeed": 0.7,
         "apps": {
             "terminal": ["foot"],
             "audio": ["pavucontrol"],
@@ -812,8 +810,6 @@ For example, to disable the bar on DP-1:
     "paths": {
         "wallpaperDir": "~/Pictures/Wallpapers",
         "lyricsDir": "~/Music/lyrics/",
-        "sessionGif": "root:/assets/kurukuru.gif",
-        "mediaGif": "root:/assets/bongocat.gif",
         "noNotifsPic": "root:/assets/dino.png",
         "lockNoNotifsPic": "root:/assets/dino.png"
     }
