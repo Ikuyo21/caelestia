@@ -50,15 +50,16 @@ packages=(
     wf-recorder slurp fuzzel
     # Night light (hypr execs.lua)
     gammastep geoclue
-    # Fonts
-    ttf-jetbrains-mono-nerd ttf-material-symbols-variable-git ttf-rubik
+    # Fonts (Rubik is installed straight from google/fonts below - AUR's
+    # ttf-rubik is abandoned and its source URL is dead)
+    ttf-jetbrains-mono-nerd ttf-material-symbols-variable-git
     noto-fonts noto-fonts-cjk noto-fonts-emoji
     # Shell/terminal
     fish eza zoxide direnv alacritty fastfetch matugen btop starship
     # Neovim (clangd ships inside clang; no standalone clangd package exists)
     neovim git clang qml-language-server-bin
     # GTK/Qt theming
-    adw-gtk-theme papirus-icon-theme papirus-folders darkly-bin
+    adw-gtk-theme papirus-icon-theme papirus-folders
     # Auth/network/bluetooth
     gnome-keyring polkit-gnome networkmanager bluez bluez-utils
     # Audio
@@ -69,8 +70,35 @@ packages=(
     curl trash-cli jq lazygit bat ripgrep xdg-user-dirs
 )
 # Explicitly NOT installed: caelestia-cli (replaced by bin/caelestia +
-# matugen), foot (we use Alacritty)
+# matugen), foot (we use Alacritty), darkly-bin (QWidgets-only theme engine
+# that drags in the whole KDE Frameworks 5+6 stack for a shell that is pure
+# QML - dropped per the performance/simplicity philosophy, see CLAUDE.md)
+
+# The old non-git ttf-material-symbols-variable (deleted from the AUR, left
+# over from the original upstream caelestia install) conflicts with the -git
+# variant and would abort yay's entire batched transaction. The -git package
+# Provides= the same name, so nothing loses its dependency.
+if pacman -Q ttf-material-symbols-variable &>/dev/null; then
+    log "removing superseded ttf-material-symbols-variable (conflicts with the -git variant)"
+    sudo pacman -Rdd --noconfirm ttf-material-symbols-variable
+fi
+
 yay -S --needed --noconfirm "${packages[@]}"
+
+# Rubik (the shell's clock/workspaces font): AUR's ttf-rubik has been
+# untouched since 2021 and downloads from a fonts.google.com endpoint whose
+# zip layout changed, so its package() always fails. Install the variable
+# fonts directly from the google/fonts repo instead.
+rubik_dir="$HOME/.local/share/fonts/rubik"
+if [[ ! -f "$rubik_dir/Rubik[wght].ttf" || ! -f "$rubik_dir/Rubik-Italic[wght].ttf" ]]; then
+    log "installing the Rubik font from google/fonts"
+    mkdir -p "$rubik_dir"
+    curl -fsSL -o "$rubik_dir/Rubik[wght].ttf" \
+        'https://raw.githubusercontent.com/google/fonts/main/ofl/rubik/Rubik%5Bwght%5D.ttf'
+    curl -fsSL -o "$rubik_dir/Rubik-Italic[wght].ttf" \
+        'https://raw.githubusercontent.com/google/fonts/main/ofl/rubik/Rubik-Italic%5Bwght%5D.ttf'
+    fc-cache -f "$rubik_dir"
+fi
 
 # ---------------------------------------------------------------- 4. build shell plugin
 log "building the native Quickshell plugin"
