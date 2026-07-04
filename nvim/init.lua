@@ -4,7 +4,8 @@ this dotfiles project's needs: C/C++ (clangd) + QML (cushycush
 qml-language-server), custom matugen-driven colorscheme, snacks dashboard,
 lualine. See CLAUDE.md "Neovim" for the full spec and the reasoning.
 
-Deliberately NOT enabled (spec): indent guides, autopairs, extra linters.
+Deliberately NOT enabled (spec): indent guides, autopairs, linters beyond
+qmllint (nvim-lint is scoped to QML only - see lua/caelestia/lint.lua).
 --]]
 
 -- ============================================================
@@ -373,9 +374,10 @@ do
 end
 
 -- ============================================================
--- SECTION 10: TOGGLE-ON EXTRAS (per spec: neo-tree + DAP only)
+-- SECTION 10: TOGGLE-ON EXTRAS (per spec: neo-tree, DAP, qmllint)
 -- ============================================================
 require 'caelestia.neotree'
 require 'caelestia.debug'
+require 'caelestia.lint'
 
 -- vim: ts=2 sts=2 sw=2 et
