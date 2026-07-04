@@ -21,3 +21,13 @@ hl.env("XDG_SESSION_DESKTOP", "Hyprland")
 
 -- Others
 hl.env("_JAVA_AWT_WM_NONREPARENTING", "1")
+
+-- The tools setup.sh installs into ~/.local/bin (caelestia, caelestia-record,
+-- ...) are invoked by bare name from keybinds and the shell, but nothing else
+-- puts ~/.local/bin on PATH (no login-shell profile does on stock Arch), so
+-- everything the session spawns must inherit it from here
+local path = os.getenv("PATH") or "/usr/local/bin:/usr/bin"
+local localbin = (os.getenv("HOME") or "") .. "/.local/bin"
+if not path:find(localbin, 1, true) then
+    hl.env("PATH", localbin .. ":" .. path)
+end

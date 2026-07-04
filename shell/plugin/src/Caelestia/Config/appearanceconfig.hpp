@@ -201,7 +201,10 @@ public:
         , m_mono(new FontStyleConfig(this))
         , m_icon(new IconFontStyleConfig(this)) {
         const auto sans = QStringLiteral("GoogleSansFlex");
-        const auto mono = QStringLiteral("CaskaydiaCove NF");
+        // ttf-jetbrains-mono-nerd (installed by setup.sh); name verified from
+        // the font's name table - "JetBrainsMono Nerd Font" is the typographic
+        // family, same string alacritty.toml uses
+        const auto mono = QStringLiteral("JetBrainsMono Nerd Font");
         const auto icons = QStringLiteral("Material Symbols Rounded");
         const QVariantMap vaxes = { { "ROND", 25 } };
 
