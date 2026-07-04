@@ -7,6 +7,7 @@ Fork of [caelestia-dots/shell](https://github.com/caelestia-dots/shell) (Quicksh
 - **A stale public repo, `Ikuyo21/dotfiles`, also exists** — an early interim push before the private repo was set up as canonical. It should be deleted manually (API can't delete it) and should NOT be worked in or treated as current.
 - Nearly the entire spec is implemented: shell fork with nexus trim, weather removal, dashboard fusion, session menu redesign, caelestia-cli replacement, keybind migrations, terminal stack (fish/alacritty/fastfetch/starship), Neovim config (kickstart base, LSP, colorscheme, dashboard, statusline), and `setup.sh`.
 - **A real run of `setup.sh` on the actual Arch machine surfaced genuine bugs** — see "Known issues" below. The repo-side fixes for all of them landed 2026-07-04; what remains is machine-side verification (rerun setup.sh, matugen end-to-end test, orphan cleanup, cold-start measurement).
+- **2026-07-05 session: fonts unified + setup.sh hardened.** The shell plugin's mono default is now `JetBrainsMono Nerd Font` (was upstream's never-installed `CaskaydiaCove NF`; exact string verified from the Arch package's font name tables — group.lua's `JetBrains Mono NF` matched nothing and is fixed too). Two latent fresh-install bugs found and fixed: nothing put `~/.local/bin` on the session PATH (keybinds/`execDetached` calls to `caelestia*` would fail; fixed in `hypr/hyprland/env.lua`), and the plugin install step could never have worked unprivileged (now upstream's documented `-DCMAKE_INSTALL_PREFIX=/` + `sudo cmake --install` + chown of the home config dir). setup.sh rewritten: `--dry-run`, per-package AUR installs with an end-of-run failure report, foreign-symlink-aware timestamped backups, chsh prompt, NetworkManager conflict detection, scheme.json re-run guard. Verified via 6 mocked persona scenarios (fresh/ricer/idempotent/failure-recovery/dry-run) in a sandboxed Git Bash harness; the real-Arch rerun and a plugin rebuild (hpp string change) are still machine-side.
 
 ## Philosophy
 Performance, beauty, simplicity — in that order when they conflict. Trim caelestia down to what earns its place, keep its visual identity, make it fast on Arch + Hyprland.
@@ -68,7 +69,7 @@ matugen/      # theming templates
 setup.sh      # bootstrap script
 ```
 
-The shell is built via CMake, not purely symlinked: `cmake -B build -DCMAKE_BUILD_TYPE=Release -DINSTALL_QSCONFDIR=~/.config/quickshell/caelestia && cmake --build build && cmake --install build`.
+The shell is built via CMake, not purely symlinked, mirroring upstream's documented install (the QML modules must land in `/usr/lib/qt6/qml` where quickshell looks, hence sudo + prefix `/`): `cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DVERSION=1.0.0 -DGIT_REVISION=$(git rev-parse --short HEAD) -DCMAKE_INSTALL_PREFIX=/ -DINSTALL_QSCONFDIR=~/.config/quickshell/caelestia && cmake --build build && sudo cmake --install build`, then chown the QSCONFDIR back to the user (sudo writes it as root). setup.sh does all of this.
 
 ---
 
@@ -143,7 +144,7 @@ Base: kickstart.nvim (uses Neovim's own built-in `vim.pack`, not `lazy.nvim` —
 ---
 
 ## Terminal (Alacritty)
-Font: `ttf-jetbrains-mono-nerd` (confirmed correct over the shell README's `caskaydia-cove-nerd`). fastfetch wired into `~/.config/fish/config.fish` guarded by `status is-interactive`. Starship added but needs theming confirmed (Known Issues #7).
+Font: `ttf-jetbrains-mono-nerd` (confirmed correct over the shell README's `caskaydia-cove-nerd`). The exact family string everywhere (alacritty.toml, the shell plugin's mono default, hypr group.lua) is **`JetBrainsMono Nerd Font`** — verified from the package's actual font name tables; do not "correct" it to `JetBrains Mono NF`, which matches nothing. fastfetch wired into `~/.config/fish/config.fish` guarded by `status is-interactive`. Starship added but needs theming confirmed (Known Issues #7).
 
 ---
 
@@ -164,9 +165,9 @@ Pattern: follow end-4/dots-hyprland's key choices and patterns where equivalent 
 ---
 
 ## setup.sh
-Full bootstrap: preflight -> AUR helper (`yay`) -> package install -> build the native Quickshell plugin -> backup existing configs -> symlink into place -> set fish as default shell -> enable NetworkManager/bluetooth -> first-run bootstrap (`matugen color 29D3F0`, headless Neovim run for mason) -> done message.
+Full bootstrap: preflight (Arch/pacman/sudo/network checks, runs from anywhere, never as root) -> AUR helper (`yay`) -> packages (repo missing set in one pacman batch; AUR packages **one at a time** so a single failed build can't cascade, failures collected and reported at exit with code 1) -> Rubik from google/fonts -> build + sudo-install the Quickshell plugin -> backup & symlink (timestamped per run, never overwrites older backups, catches foreign symlinks, prints a summary of everything it moved) -> default shell (asks first on a tty, skips with instructions otherwise, no-op if already fish) -> services (NetworkManager only if no other network stack is enabled; bluetooth; ydotool user unit) -> first-run bootstrap (initial scheme guarded by an existing `scheme.json` so re-runs never reset picked colours; headless Neovim run for mason) -> summary. `--dry-run` previews every action (built for the "existing dotfiles" persona); `--help` documents it. Idempotent: a second run changes nothing and says so.
 
-**Known Issues #1-3 are now fixed in the script** (darkly-bin dropped, Rubik vendored from google/fonts, material-symbols conflict pre-removed before the yay batch) — needs one more end-to-end run on the machine to confirm, plus the one-time KDE-orphan cleanup from issue #1.
+**Known Issues #1-3 are now fixed in the script** (darkly-bin dropped, Rubik vendored from google/fonts, material-symbols conflict pre-removed before any install) and the 2026-07-05 hardening pass was verified with 6 mocked persona scenarios (fresh Arch, existing ricer, idempotent re-runs, failure recovery, dry-runs) — still needs one real end-to-end run on the machine to confirm, plus the one-time KDE-orphan cleanup from issue #1.
 
 ---
 
