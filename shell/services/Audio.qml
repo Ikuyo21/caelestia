@@ -28,7 +28,6 @@ Singleton {
     readonly property real sourceVolume: source?.audio?.volume ?? 0
 
     readonly property alias cava: cava
-    readonly property alias beatTracker: beatTracker
 
     function setVolume(newVolume: real): void {
         if (sink?.ready && sink?.audio) {
@@ -167,10 +166,6 @@ Singleton {
         id: cava
 
         bars: GlobalConfig.services.visualiserBars
-    }
-
-    BeatTracker {
-        id: beatTracker
     }
 
     IpcHandler {
