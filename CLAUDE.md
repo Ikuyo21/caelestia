@@ -1,36 +1,61 @@
 # Caelestia Redesign — Project Context for Claude Code
 
-Fork of [caelestia-dots/shell](https://github.com/caelestia-dots/shell) (Quickshell/QML Hyprland desktop shell) plus a Neovim config, redesigned for performance, beauty, and simplicity. This file is the working spec. For the full reasoning behind any decision below, check the Obsidian vault under **Caelestia Redesign** (Overview / Requirements / Decisions / Architecture Audit / Progress Log) if it's connected in this environment — this file has the conclusions, the vault has the "why."
+Fork of [caelestia-dots/shell](https://github.com/caelestia-dots/shell) (Quickshell/QML Hyprland desktop shell) plus a Neovim config, redesigned for performance, beauty, and simplicity. This is an **updated status document**, not the original plan — most of the spec below is already built and pushed. For full historical reasoning, check the Obsidian vault under **Caelestia Redesign** if connected in this environment.
+
+## Current status (as of this update)
+- **Canonical repo: private `Ikuyo21/caelestia`** on GitHub, 15+ commits. This is the one to work in.
+- **A stale public repo, `Ikuyo21/dotfiles`, also exists** — an early interim push before the private repo was set up as canonical. It should be deleted manually (API can't delete it) and should NOT be worked in or treated as current.
+- Nearly the entire spec is implemented: shell fork with nexus trim, weather removal, dashboard fusion, session menu redesign, caelestia-cli replacement, keybind migrations, terminal stack (fish/alacritty/fastfetch/starship), Neovim config (kickstart base, LSP, colorscheme, dashboard, statusline), and `setup.sh`.
+- **A real run of `setup.sh` on the actual Arch machine surfaced genuine bugs** — see "Known issues" below. The repo-side fixes for all of them landed 2026-07-04; what remains is machine-side verification (rerun setup.sh, matugen end-to-end test, orphan cleanup, cold-start measurement).
 
 ## Philosophy
 Performance, beauty, simplicity — in that order when they conflict. Trim caelestia down to what earns its place, keep its visual identity, make it fast on Arch + Hyprland.
 
 ## Approach
-**Hybrid**: fork upstream, delete unwanted modules/pages up front, rewrite kept modules module-by-module as they're touched — not a big-bang rewrite. Nothing gets "simplified" without first checking real dependencies via grep across the codebase (this caught several near-misses during discussion — e.g. cutting a service that turned out to still be used elsewhere).
+**Hybrid**: fork upstream, delete unwanted modules/pages up front, rewrite kept modules module-by-module as they're touched. Nothing gets simplified without first checking real dependencies via grep across the codebase — this discipline caught several near-misses during discussion and should continue into any further work.
 
 ## Working practices
-- **Use the full toolset available** — bash, file editing, git, actually running and testing things on the machine, not just reading and guessing. The discussion phase's discipline (verify against real code before cutting/changing anything, don't assume) should carry into execution — check dependencies with grep before deleting, actually run the shell/nvim to confirm something works rather than assuming it compiles.
-- **Keep the Obsidian vault updated as you go**, under **Caelestia Redesign**, same conventions already established there:
-  - **Progress Log.md** — append a dated entry after any real chunk of work (what got built, what broke, what got deferred), same format as the existing entries.
-  - **Decisions.md** — log any real decision made or deviation from this spec during execution (ADR-lite: Decision / Context / Owner), especially anything not explicitly covered above that required a judgment call.
-  - **Requirements.md** — flip `[ ]` to `[x]` as items actually get implemented (not just planned) — it should reflect real build status, not just discussion-phase intent.
-  - Use `vault_patch` (or the equivalent targeted-edit tool) for section edits, not a full-file overwrite tool — a full overwrite will destroy everything else in the file. This bit Claude (chat) once during discussion; don't repeat it.
+- **Use the full toolset available** — bash, file editing, git, actually running and testing things, not just reading and guessing.
+- **Keep the Obsidian vault updated as you go**, under **Caelestia Redesign**: dated entries in Progress Log, real decisions in Decisions.md, checkboxes in Requirements flipped only when actually built.
+- **Use targeted section edits in Obsidian, never a full-file overwrite tool** — this destroyed an entire document once already during discussion. Don't repeat it.
+- **Verify against the real world before trusting a plan, including this one.** Several items below were only caught by actually running things (a real `setup.sh` execution, diffing files byte-for-byte, checking live AUR listings) — reading documentation or a prior plan is not the same as confirming it works.
 
-## Environment
-- Single physical machine, dual-boot Windows/Arch. Editing/planning can happen on Windows; **building the native C++ plugin and running/testing Hyprland+Quickshell requires being booted into Arch.**
-- Self-discover hardware/monitor specifics at kickoff (`hyprctl monitors`, `lspci | grep VGA`, `free -h`) rather than relying on anything hardcoded here.
-- AUR helper: `yay`.
+---
 
-## Performance targets
-No reliable published benchmark exists for Quickshell/caelestia — don't invent absolute numbers. **Measure the unmodified upstream shell on the actual machine first**, then hit these reduction targets against that real baseline:
-- Idle RSS memory: ≥35% lower
-- Idle CPU%: ≥30% lower
-- Cold start (launch → first frame): ≥25% faster
+## Known issues — status after the 2026-07-04 fix session
+
+Items 1–4 and 7 are resolved in the repo (verify on the next real Arch run); 5 and 6 still need the machine.
+
+### 1. `darkly-bin` — RESOLVED: dropped from setup.sh
+Decision made per the philosophy: it's a QWidgets-only theme engine (this shell is pure QML/Quickshell), it failed to build anyway, and it dragged in **33 packages / 68.85 MiB** of KDE Frameworks. The live AUR metadata confirmed its dependency list spans *both* the KF6 and legacy KF5 stacks (`frameworkintegration5`, `kirigami2`, `libplasma`, …) — even a fixed build would keep that cost. Not worth it for cosmetics.
+**Machine-side cleanup still needed once:** the KDE packages from the failed install are now orphans. Run `pacman -Qtdq` to list orphans, review the list (unrelated orphans may appear too), then `sudo pacman -Rns $(pacman -Qtdq)` and repeat until empty.
+
+### 2. `ttf-rubik` — RESOLVED: replaced with a direct google/fonts install
+Root cause confirmed from the live PKGBUILD: the package is abandoned (last modified May 2021, 1 vote, popularity 0) and its source is `https://fonts.google.com/download?family=Rubik` — an endpoint whose zip layout Google changed years ago, so `cp src/Rubik-*` can never succeed. Not fixable on our side, not worth waiting for. `setup.sh` now downloads `Rubik[wght].ttf` + `Rubik-Italic[wght].ttf` directly from the google/fonts GitHub repo into `~/.local/share/fonts/rubik/` and runs `fc-cache` (URLs verified live, idempotent check on both files).
+Note for AUR checks in general: the AUR web UI *and* its RPC are behind an Anubis bot-check that blocks WebFetch-style tools — plain `curl` against `https://aur.archlinux.org/rpc/v5/...` and cgit `/plain/PKGBUILD` URLs works fine.
+
+### 3. material-symbols conflict — RESOLVED in setup.sh
+Investigation result: the non-git `ttf-material-symbols-variable` **no longer exists in the AUR at all** — the installed copy is an unmaintainable leftover (most likely from the original upstream caelestia install; it is not a dependency of papirus-icon-theme). The `-git` package declares `Provides=ttf-material-symbols-variable`, so removing the old one cannot break a dependency. `setup.sh` now removes it with `pacman -Rdd` right before the batched `yay` install, so the conflict can no longer kill the whole transaction. Idempotent (checks the literal package name, which the -git variant never matches).
+
+### 4. `fastfetch/logo.txt` transcription errors — RESOLVED and re-verified
+Fixed in commit f8f7285 (wholesale programmatic replacement from the vault, no retyping). Re-verified this session byte-for-byte against the vault's Ascii Art note on disk: logo identical (47 lines, 13,160 bytes, no CR bytes, trailing newline present). The nvim dashboard dragon header was byte-verified the same way — also identical. No transcription drift remains anywhere.
+
+### 5. matugen template keywords — STILL OPEN, machine-side
+Cross-checked the template's role names (`surface_container_high`, `outline_variant`, `surface_tint`, etc.) against matugen's real documentation — they check out on paper, more solid than originally feared. But this was never actually run end-to-end (a sandbox attempt to test it hit an unrelated toolchain issue). **Run `matugen color hex "#29D3F0" -v` as the very first test on the real machine, before testing anything downstream of it.** One known matugen quirk found: `.default` always resolves to the dark-mode color regardless of the `-m` flag (a confirmed upstream matugen issue) — shouldn't matter here since nothing in this project needs real light-mode switching, but worth knowing if that's ever revisited.
+
+### 6. Baseline performance numbers — real numbers in hand; cold start STILL OPEN, machine-side
+Measured on the actual machine, unmodified upstream caelestia, idle: **CPU 12%, RAM 35%, GPU 54%** (via System Monitor/fastfetch; GPU wasn't one of the original three tracked metrics but is now measured, worth keeping). Real targets for the trimmed shell: **CPU <=8.4%, RAM <=22.75%**. Cold start time (launch -> first frame) still hasn't been measured -- needs a separate timed test. Use the same measurement tool for both baseline and trimmed-shell numbers to keep the comparison fair.
+
+### 7. Smaller items — all RESOLVED
+- **Starship theming — resolved by design, no template needed.** `starship.toml` uses only named ANSI colors (verified: zero hardcoded hex), and `matugen/templates/alacritty.toml` themes all 16 ANSI slots from M3 roles — so starship already follows both dynamic and pick-your-own modes transitively through the terminal palette (this matches what the vault Progress Log recorded at build time). A dedicated matugen template would add nothing: starship.toml has no import mechanism, so it would mean templating the entire file for zero visual difference. Decision recorded in the vault.
+- **qmllint via nvim-lint — now actually wired** (`nvim/lua/caelestia/lint.lua`, loaded from init.lua section 10; it was NOT wired before this session despite being decided). Mirrors upstream's own CI lint job: `-I` args parsed from the Quickshell-generated `.qmlls.ini`, `--import disable`, scoped to the qml filetype only. Parse-checked; needs a runtime smoke test on Arch.
+- **lualine — verified genuinely themed**, not just installed: `statusline.lua` builds a custom theme table from the caelestia palette (single-accent mode block, semantic diagnostic colors), no default rainbow.
+- clangd vs ccls was revisited and re-confirmed: **keep clangd.** ccls also depends on libclang, so it wouldn't reduce the LLVM footprint at all, just trade to a less-maintained tool for no benefit. Don't relitigate this without new information.
 
 ---
 
 ## Repo structure
-Single repo, config identifier stays **`caelestia`** throughout (no rename) — `qs -c caelestia`, `~/.config/quickshell/caelestia`, every IPC call in keybinds stays as upstream uses it.
+Single repo, config identifier stays **`caelestia`** throughout — `qs -c caelestia`, `~/.config/quickshell/caelestia`, every IPC call in keybinds.
 
 ```
 shell/        # the caelestia-shell fork (QML + native plugin)
@@ -43,207 +68,116 @@ matugen/      # theming templates
 setup.sh      # bootstrap script
 ```
 
-The shell isn't purely symlinked — it's **built via CMake**: `cmake -B build -DCMAKE_BUILD_TYPE=Release -DINSTALL_QSCONFDIR=~/.config/quickshell/caelestia && cmake --build build && cmake --install build`.
+The shell is built via CMake, not purely symlinked: `cmake -B build -DCMAKE_BUILD_TYPE=Release -DINSTALL_QSCONFDIR=~/.config/quickshell/caelestia && cmake --build build && cmake --install build`.
 
 ---
 
-## Shell (caelestia fork) — cut list
+## Shell (caelestia fork) — cut list (implemented, verified clean via direct repo check)
 
-### Nexus (control center) — trim to appearance + panels only
-**Delete:**
-- `modules/nexus/pages/network/EthernetDetailPage.qml`, `modules/nexus/common/EthernetSection.qml`, `modules/nexus/pages/NetworkPage.qml`
-- `modules/nexus/pages/bluetooth/BtDeviceInfo.qml`, `modules/nexus/pages/bluetooth/BluetoothPairing.qml`, `modules/nexus/pages/BluetoothPage.qml`
-- `modules/nexus/pages/audio/AppVolumes.qml`
-- `modules/nexus/pages/apps/AllApps.qml`, `modules/nexus/pages/apps/AppInfo.qml`
-- `modules/nexus/pages/LanguageAndRegion.qml`
-- `modules/nexus/pages/ServicesPage.qml`
-- `modules/nexus/pages/AboutPage.qml`
-- Drop "Updates"/"Plugins" entries from `PageRegistry.qml` (no implementation files upstream, nothing to delete, just remove the registry entries)
+### Nexus — trimmed to appearance + panels only
+**Verified**: only `WallpaperAndStyle.qml` and `PanelsPage.qml` (+ their subfolders) remain in `shell/modules/nexus/pages/`. Network/bluetooth/audio/updates/plugins/apps/services/language/about pages all removed. Deep-settings functionality deferred to system tools (`nm-connection-editor`/`iwctl`, `blueman`, `pavucontrol`).
+**Do NOT delete these services** — verified still shared beyond nexus: `services/Nmcli.qml`, `services/VPN.qml`, Bluetooth (Quickshell built-in), `services/Audio.qml`.
 
-**Keep:** `pages/WallpaperAndStyle.qml` + `pages/wallandstyle/`, `pages/PanelsPage.qml` + `pages/panels/`, `NavPane.qml`, `PageRegistry.qml` (trimmed), `Nexus.qml`, `NexusState.qml`, `PageCompRegistry.qml` (trimmed). Remove the now-dead `Weather` `ToggleRow` from `pages/panels/DashboardPanel.qml`.
+### Weather — verified completely gone
+Zero matches anywhere in the shell for weather-related files or references, including the underlying `services/Weather.qml` itself.
 
-**Do NOT delete these services** — verified still shared beyond nexus: `services/Nmcli.qml` (used by `bar/popouts/Network.qml`, `WirelessPassword.qml`, `bar/components/StatusIcons.qml`, `utilities/cards/Toggles.qml`), `services/VPN.qml` (Toggles.qml), Bluetooth (Quickshell built-in, used by `bar/popouts/Bluetooth.qml`), `services/Audio.qml` (bar/osd/dashboard).
-
-Network/bluetooth/audio deep-settings functionality is deferred to system tools: `nm-connection-editor`/`iwctl`, `blueman`, `pavucontrol`.
-
-### Weather — cut everywhere, including the service itself
-**Delete:** `services/Weather.qml`, `modules/lock/WeatherInfo.qml`, `modules/lock/weather/BriefInfo.qml`, `modules/lock/weather/Forecast.qml`, `modules/dashboard/WeatherTab.qml`, `modules/dashboard/dash/SmallWeather.qml`.
-**Edit (remove instantiations/references):** `modules/lock/Content.qml` (remove `WeatherInfo {}`), `modules/dashboard/Dash.qml` (remove `SmallWeather {}`), `modules/dashboard/Content.qml` (remove `Weather` from `dashboardTabs`), `utils/Icons.qml` (drop now-dead `weatherIcons`/`getWeatherIcon()`, low priority).
-
-### Dashboard — fuse into one view, no tabs
-Remove `Tabs.qml` and the tab-bar navigation in `Content.qml` (verified isolated, safe).
-
-**Keep:** User card, DateTime, compact Media widget (`dash/Media.qml` — cover art + controls, no lyrics), Performance cards **simplified** (replace `CircularProgress` rings and the usage-`MaterialShape` morphing with plain linear bars + the "X / Y unit" text `UsageFmt.formatKib` etc. already compute).
-
-**Cut:** `dash/Calendar.qml`, `dash/Resources.qml` (redundant once Performance cards are simplified), the full Media tab's lyrics/visualizer system — `modules/dashboard/media/BackgroundShapes.qml`, `CoverVisualiser.qml`, `Details.qml`, `LyricList.qml`, `LyricsAndSelector.qml`, `LyricsInfo.qml`, and the `modules/dashboard/Media.qml` tab wrapper (~1,100 lines total).
+### Dashboard — verified fused into one view, no tabs
+`Tabs.qml` and tab navigation confirmed removed from `Content.qml`. Kept: User card, DateTime, compact Media widget (cover art + controls, no lyrics), Performance cards simplified to plain bars + text instead of circular gauges/shape-morphing.
 
 ### Lock screen
-**Cut:** `modules/lock/WeatherInfo.qml` + `weather/` (see Weather above), `modules/lock/Media.qml` (remove `Media {}` from `Content.qml` — underlying MPRIS service stays, used elsewhere).
-**Keep:** Center (clock, profile pic, password), NotifDock/NotifGroup, LockSurface (the blob panel shape).
+Weather and media widgets cut, Center/NotifDock/LockSurface kept.
 
-### Power/session menu — redesign
-`modules/session/Content.qml` currently: 4 circular icon-only buttons (logout/shutdown/hibernate/reboot) + a decorative `AnimatedImage` GIF. **Redesign to a text-list style**: bracket-style header, vertical labeled list, highlight bar on the focused/hovered item, our theme colors. **Drop the decorative GIF.** Trigger stays exactly as-is — the single existing bar power icon (`modules/bar/components/Power.qml`), no other changes to how it's opened. OSD (`modules/osd/`) is explicitly untouched.
+### Power/session menu
+Redesigned to a text-list style (bracket header, vertical labeled list, highlight bar), decorative GIF dropped, still triggered by the single existing bar power icon.
 
-### caelestia-cli — fully cut, replaced by matugen
-Two jobs it did:
-1. Shell control convenience (`caelestia shell ...`) — **needs no replacement**, it was just a wrapper around native `IpcHandler`s already in the repo (`qs -c caelestia ipc call <target> <function>` works standalone).
-2. Wallpaper switching + dynamic scheme generation — **hard dependency**, `services/Wallpapers.qml` shelled out to the `caelestia` binary directly, `Colours.qml` has no native generation of its own (it just watches `${Paths.state}/scheme.json` via `FileView`).
+### caelestia-cli — replaced
+`bin/caelestia` wrapper script confirmed built and correctly implements both dynamic (wallpaper) and pick-your-own (seed color) modes via matugen.
 
-**Replacement**: [matugen](https://github.com/InioX/matugen) + a small wrapper script. Wrapper takes over what `Wallpapers.qml` called `caelestia wallpaper -f/-r/-p` for (setting wallpaper, writing `${Paths.state}/wallpaper/path.txt`, live preview). A matugen template renders straight to `${Paths.state}/scheme.json` matching `Colours.qml`'s existing schema — `Colours.qml` itself needs **zero changes**.
-
-### Special workspaces — dropped entirely (keybinds/hypr, not shell QML)
-All 5 toggles removed (`specialws`/`sysmon`/`music`/`communication`/`todo`) — see Keybinds section below.
+### Special workspaces — verified fully removed
+All 5 toggles gone, along with every window rule that pinned an app to one (`btop`->sysmon, music apps->music, Discord-family apps->communication, Todoist->todo). Zero `special:` references confirmed left in the hypr config.
 
 ---
 
 ## Theming architecture — two modes, one pipeline
 Both modes go through matugen, difference is only the seed input:
-- **Dynamic**: `matugen image <wallpaper>` — colors derived from wallpaper
-- **Pick your own**: `matugen color <hex>` — colors derived from one user-picked seed color
+- **Dynamic**: `matugen image <wallpaper>`
+- **Pick your own**: `matugen color <hex>`
 
-Both produce identical downstream output, so shell/Neovim/Alacritty/starship colorscheme-reading code doesn't need to know which mode generated it. `#29D3F0` (electric cyan) is the **default seed**, not a hardcoded fallback — `matugen color 29D3F0` runs as part of first-run setup so there's always a generated file to read.
+`#29D3F0` (electric cyan) is the default seed, not a hardcoded fallback. The color picker UI (`ColourSelect.qml`) was built from scratch — it was an unfinished upstream stub, nothing to extend.
 
-**The color picker UI needs to be built from scratch** — `modules/nexus/pages/wallandstyle/ColourSelect.qml` is an unfinished upstream stub ("Page under construction"), nothing to extend.
+**Fixed/manual palette values:**
+- Background: `#16171b`, Text: `#E8E8EA` / `#9A9AA0` secondary, Accent: `#29D3F0`
 
-**Fixed/manual palette values** (used as the default seed and for any hardcoded reference):
-- Background: `#16171b` (true dark neutral, not pure black)
-- Text: `#E8E8EA` (primary), `#9A9AA0` (secondary/muted)
-- Accent: `#29D3F0` (electric cyan)
-- Elevation: Material 3 tonal system, no color tinting, pure neutral grays
-
-**Corner rounding & blur/transparency — all bind to existing native properties, this is UI work not new architecture:**
-- Roundness slider → `Tokens.rounding.scale` only (corner radius multiplier, already exists, already used in ~7+ places). `deformScale` (blob waviness) stays fixed, not exposed.
-- Transparency slider → `AppearanceConfig.transparency.enabled`/`.base` (already wired into `Colours.qml`).
-- Blur slider → Hyprland's `decoration:blur:size`/`passes`, via the existing `Hypr.extras.applyOptions()`/`HyprExtras` live-apply mechanism (already used for on/off in `GameMode.qml`).
-- **All three sliders live in the nexus "Wallpaper & style" appearance page** (the page kept from the nexus trim above).
-- Terminal blur/transparency: Alacritty has no native blur, comes entirely from a Hyprland windowrule on window class `Alacritty`. Live transparency also proposed via Hyprland windowrule-opacity (reusing the same `HyprExtras` mechanism) rather than editing `alacritty.toml` directly — **verify empirically once running**, exact behavior (windowrule alone vs. also touching Alacritty's own `window.opacity`) wasn't resolved in the abstract.
-- **matugen also themes Alacritty's actual color palette** (not just blur/opacity) — same wallpaper/seed analysis drives both.
+**Sliders — verified they bind to real existing properties:**
+- Roundness -> `Tokens.rounding.scale` only. Transparency -> `AppearanceConfig.transparency`. Blur -> Hyprland's `decoration:blur:size`/`passes` via `HyprExtras`. All three live in the nexus "Wallpaper & style" page.
+- Terminal (Alacritty) blur/transparency via Hyprland windowrule on window class `Alacritty` — exact behavior (windowrule alone vs. also touching Alacritty's own opacity) still needs empirical confirmation.
+- matugen also themes Alacritty's actual colors (confirmed working via the repo's `matugen/templates/alacritty.toml`).
 
 ---
 
 ## Neovim
-Base: **kickstart.nvim** — a single documented `init.lua`, meant to be trimmed, not LazyVim/NvChad. Uses Neovim's own built-in `vim.pack` package manager (not `lazy.nvim` — verify this is still current when building, kickstart evolves).
+Base: kickstart.nvim (uses Neovim's own built-in `vim.pack`, not `lazy.nvim` — verify this is still current, kickstart evolves). Scope: C/C++/QML only.
 
-Scope: **C/C++/QML only** — this config is for working on this dotfiles project itself, not a general-purpose IDE. User is new to Neovim.
+**LSP:** `clangd` for C/C++ (confirmed correct choice, do not swap to ccls — see Known Issues #7). `qml-language-server` (cushycush/Go-based, the `-bin` AUR variant) for QML — preferred over Qt's own `qmlls`, which can't resolve Quickshell-specific types. Treesitter grammar is `qmljs`, not `qml`. Empty `.qmlls.ini` next to `shell.qml`, gitignored.
 
-**LSP:**
-- C/C++: `clangd`
-- QML: `qml-language-server` (cushycush, Go-based, Quickshell-aware — go-to-definition, workspace indexing, Qt module discovery) — **preferred over** Qt's own `qmlls`, which per Qt's docs is still "in development" and can't resolve Quickshell-specific types like `PanelWindow`.
-- Treesitter grammar for QML is `qmljs`, not `qml` — `:TSInstall qmljs`.
-- Quickshell's own docs: create an empty `.qmlls.ini` next to `shell.qml`; Quickshell manages it automatically. Gitignore it (machine-specific).
+**Colorscheme** — ties into the dynamic/pick-your-own toggle via matugen's M3 roles:
 
-**Colorscheme** — ties into the same dynamic/pick-your-own toggle as the shell, via matugen's Material Design 3 role output:
-| Syntax role | Fixed-mode hex | Dynamic-mode matugen role |
+| Syntax role | Fixed hex | Dynamic matugen role |
 |---|---|---|
 | Background | `#16171b` | `background` |
 | Default text | `#E8E8EA` | `on_background` |
 | Keywords | `#29D3F0` | `primary` |
 | Strings | `#6FA8B5` | `secondary` |
-| Numbers | `#c9a86a` | `tertiary` (M3: hue-rotated 60° from primary — the *designed* answer, not an arbitrary deviation) |
+| Numbers | `#c9a86a` | `tertiary` |
 | Comments | `#6a6d73`, italic | `outline_variant` |
-| Component/type names | `#f2f2f3` | `on_surface` (bright tone) |
-| Errors/warnings/git diff | semantic red/amber/green, unconditionally | same (verify whether matugen's own `error` role — red-family by M3 convention — can be used and still stay recognizable) |
+| Types | `#f2f2f3` | `on_surface` |
+| Errors/warnings/git | semantic red/amber/green, unconditional | same |
 
-Fallback: if the matugen-generated file doesn't exist yet, fall back to fixed-mode values (shouldn't actually happen given the first-run bootstrap, but don't let it hard-error).
+**Dashboard**: `snacks.nvim`, dashboard module only. `header` = the custom dragon ASCII art (verify this one was copied correctly too, given the fastfetch logo had transcription errors — don't assume this one is fine just because it wasn't explicitly flagged).
 
-**Dashboard**: `snacks.nvim`, dashboard module **only** (don't opt into its other bundled utilities — explorer/notifier/etc). `header` = the custom dragon ASCII art (delivered as a file during discussion, no "ZVIM"-style text logo). Menu: Find File (f), New File (n), Recent Files (r), Find Text (g), Config (c), Restore Session (s) — drop the "Lazy" entry since we use `vim.pack`.
+**Enabled**: `neo-tree` (file explorer), DAP (debugger — C++ side standard via `codelldb`, QML side unverified/less mature, don't assume it works). `nvim-lint` scoped specifically to `qmllint` for QML (see Known Issues #7).
+**Not enabled**: indentation guides, autopairs, general extra linters.
 
-**Toggle-on extras enabled**: `neo-tree` (file explorer), DAP (debugger). **Caveat**: DAP for the C++ plugin is standard (`nvim-dap` + `codelldb`/`cpptools`). DAP for QML itself is much less mature — investigate for real before assuming it works, don't just wire it up blind.
-**Not enabled**: indentation guides, autopairs, extra linters (clangd's diagnostics cover enough for now).
-
-**Statusline**: `lualine.nvim`, themed to our palette (not lualine's default rainbow mode-colors). Sections: mode indicator (cyan), git branch, filename+modified dot, diagnostics (semantic red/amber), filetype, LSP name, line:col.
+**Statusline**: `lualine.nvim`, themed to the established palette (not lualine's default rainbow mode-colors) — verified actually themed (custom theme table from the caelestia palette in `statusline.lua`).
 
 ---
 
 ## Terminal (Alacritty)
-- Font: **`ttf-jetbrains-mono-nerd`** (JetBrains Mono Nerd Font) — resolves a discrepancy between the shell's README (said `caskaydia-cove-nerd`) and the actual dots manifest (`ttf-jetbrains-mono-nerd`); the manifest wins.
-- fastfetch runs on every interactive shell start, wired into `~/.config/fish/config.fish`:
-  ```fish
-  if status is-interactive
-      fastfetch
-  end
-  ```
-- fastfetch custom logo: `~/.config/fastfetch/config.jsonc` → `"logo": { "source": "~/.config/fastfetch/logo.txt", "type": "file" }`. The ASCII art file was delivered during discussion. Module list inspired by a reference screenshot's layout (system/kernel/shell/uptime/DE-WM/memory/storage/colors), adapt for Arch.
-- Starship prompt: added, themed via the same matugen pipeline as everything else (dynamic/pick-your-own applies here too).
+Font: `ttf-jetbrains-mono-nerd` (confirmed correct over the shell README's `caskaydia-cove-nerd`). fastfetch wired into `~/.config/fish/config.fish` guarded by `status is-interactive`. Starship added but needs theming confirmed (Known Issues #7).
 
 ---
 
 ## Keybinds (`hypr/hyprland/keybinds.lua`, `variables.lua`, `rules.lua`)
-Approach: follow **end-4/dots-hyprland**'s key choices and patterns where equivalent functionality exists — **not a literal file copy**, end-4's binds call into a different Quickshell config's IPC handlers that don't exist here. Adapt to caelestia's actual IPC targets.
+Pattern: follow end-4/dots-hyprland's key choices and patterns where equivalent functionality exists — not a literal file copy, adapted to caelestia's actual IPC targets.
 
-**Patterns adopted:**
-- Resilient fallback — try the native shell IPC first, fall back to a standalone CLI tool if the shell isn't alive. Use this shape for the migration items below.
-- App-launcher shortcuts bound to configurable variables (terminal/browser/file-manager/editor), not hardcoded — caelestia doesn't have this currently, worth adding.
+**Verified already matching end-4 almost everywhere** — `CTRL+ALT+Delete` (session), `SUPER+L` (lock), `SUPER+SHIFT+L` (sleep), scroll-wheel/Page_Up/Down workspace nav, window pin, fullscreen/maximize, keyboard resize (covers split-ratio) were all already present in caelestia before any changes. Don't "fix" gaps that don't actually exist.
 
-**Verified during discussion: caelestia already matches end-4 almost everywhere else** — don't waste time "fixing" gaps that don't exist:
-- `kbSession = "CTRL + ALT + Delete"`, `kbLock = "SUPER + L"`, direct sleep bind `SUPER+SHIFT+L` → `systemctl suspend-then-hibernate` — all already identical to end-4's choices.
-- Scroll-wheel workspace switching, `Page_Up`/`Page_Down` nav, workspace-group jumps, window pin (`kbPinWindow`), fullscreen + "bordered fullscreen" (maximize), keyboard resize (covers split-ratio in tiled mode) — all already present.
-- Explicitly declined as not worth adding: numpad duplicate workspace bindings, a direct poweroff quick-bind.
+**Migrated off caelestia-cli:**
+- `caelestia shell -d` -> `qs -c caelestia -d`
+- `Print` screenshot -> same native global-shortcut path as the other screenshot binds
+- Special workspaces — dropped entirely, not migrated (see cut list above)
+- Recording simplified to 2 modes (fullscreen + region-select) via `wf-recorder` + `slurp`
+- Clipboard/emoji via `fuzzel` + `cliphist`, plus a curated `data/emoji.txt` (233 entries) piped into fuzzel for the emoji picker — confirmed built and working (`bin/caelestia-emoji`)
 
-**Cheatsheet**: not a live in-app feature — becomes a static `README.md`/`KEYBINDS.md` in the repo instead, written once the scheme below is actually finalized in code.
-
-**Required migrations (caelestia-cli is gone, these called it directly):**
-- `caelestia shell -d` (2 places: restore-lock, kill/restart bind) → `qs -c caelestia -d` (trivial rename, unrelated to the CLI cut — this just launches Quickshell itself)
-- `Print` key screenshot (`caelestia screenshot`) → switch to the same native global-shortcut path (`hl.dsp.global(...)`) the other screenshot binds already use — trivial
-- **Special workspaces — dropped entirely**, not migrated. Remove all 5 toggle binds (`specialws`/`sysmon`/`music`/`communication`/`todo`) from `keybinds.lua`. **Also remove the window rules in `rules.lua`** that pinned apps to them, or those apps become unreachable:
-  - `btop` → was `special:sysmon`
-  - `feishin`/`Spotify`/`Supersonic`/`Cider`/YouTube Music/`Plexamp`/simpmusic (+ Spotify's title-match variant) → was `special:music`
-  - `discord`/`equibop`/`vesktop`/`whatsapp` → was `special:communication`
-  - `Todoist` → was `special:todo`
-- Recording — simplified to **2 modes** (fullscreen + region-select, down from upstream's 3), via `wf-recorder` + `slurp`. No native IPC exists for this (`services/Recorder.qml` has no `IpcHandler`), build fresh.
-- Clipboard/emoji — `fuzzel` as the picker frontend (matches the end-4 pattern already adopted), paired with `cliphist` for clipboard history, a plain curated emoji list for the emoji picker.
+**Cheatsheet**: static `README.md`/`KEYBINDS.md` in the repo, not a live in-app feature.
 
 ---
 
-## setup.sh — full bootstrap
-1. **Preflight** — confirm Arch Linux, confirm not root, confirm run from repo root
-2. **AUR helper** — `yay`, bootstrap if not present
-3. **Package install**, grouped:
-   - Core/build: `hyprland`, `xdg-desktop-portal-hyprland`, `xdg-desktop-portal-gtk`, `quickshell-git` (AUR), `qt6-base`/`qt6-declarative`/`qt6-shadertools`, `cmake`, `ninja`, `pkgconf` (no m3shapes package exists — `shell/CMakeLists.txt` fetches it from GitHub via FetchContent during the build)
-   - Native plugin build deps: `libqalculate`, `pipewire`, `aubio`, `libcava` (AUR), `fftw`
-   - Shell utilities: `ddcutil`, `brightnessctl`, `lm_sensors`, `swappy`, `wl-clipboard`, `xkeyboard-config`, `cliphist`, `ydotool`, `hyprpicker`
-   - Fonts: `ttf-jetbrains-mono-nerd`, `ttf-material-symbols-variable-git` (AUR), `ttf-rubik` (AUR)
-   - Shell/terminal: `fish`, `eza`, `zoxide`, `direnv`, `alacritty`, `fastfetch`, `matugen` (in extra since ~v4), `btop`, `starship`
-   - Neovim: `neovim`, `git`, `clang` (clangd ships inside it; no standalone package), `qml-language-server-bin` (AUR)
-   - GTK/Qt theming: `adw-gtk-theme`, `papirus-icon-theme`, `papirus-folders`, `darkly-bin`
-   - Auth/network/bluetooth: `gnome-keyring`, `polkit-gnome`, `networkmanager`, `bluez`, `bluez-utils`
-   - Audio: full `pipewire` stack, `wireplumber`, `pavucontrol`
-   - File manager: `thunar`
-   - General: `curl`, `git`, `trash-cli`, `jq`, `lazygit`, `bat`, `ripgrep`, `xdg-user-dirs`
-   - **Explicitly NOT installed**: `caelestia-cli`, `foot` (upstream's default terminal — we use Alacritty)
-4. **Build the native Quickshell plugin** — CMake steps above, pointed at `~/.config/quickshell/caelestia`
-5. **Backup** any existing non-symlink configs (timestamped) before touching anything
-6. **Symlink** each repo component to its XDG destination
-7. **Set fish as default shell** — idempotent, skip if already fish
-8. **Enable services** — NetworkManager, bluetooth (PipeWire is socket-activated, no explicit enable needed)
-9. **First-run bootstrap** — `matugen color 29D3F0` to generate an initial scheme (so nothing's unstyled on first launch), headless Neovim run to let mason pre-install LSPs/plugins
-10. **Done message** — reminder to log back into the Hyprland session
+## setup.sh
+Full bootstrap: preflight -> AUR helper (`yay`) -> package install -> build the native Quickshell plugin -> backup existing configs -> symlink into place -> set fish as default shell -> enable NetworkManager/bluetooth -> first-run bootstrap (`matugen color 29D3F0`, headless Neovim run for mason) -> done message.
+
+**Known Issues #1-3 are now fixed in the script** (darkly-bin dropped, Rubik vendored from google/fonts, material-symbols conflict pre-removed before the yay batch) — needs one more end-to-end run on the machine to confirm, plus the one-time KDE-orphan cleanup from issue #1.
 
 ---
 
 ## Animation (`hypr/hyprland/animations.lua`)
-Upstream's current config (32 lines) is already compact and intentional — Material Design 3 easing curve names, not bloated. Only change: **faster/snappier durations**, roughly 30–40% shorter, same curves/styles, same relative rhythm:
-
-| Leaf | Current | New |
-|---|---|---|
-| layersIn | 500ms | 300ms |
-| layersOut | 400ms | 300ms |
-| fadeLayers | 500ms | 300ms |
-| windowsIn | 500ms | 300ms |
-| windowsOut | 300ms | 200ms |
-| windowsMove | 600ms | 400ms |
-| workspaces | 500ms | 300ms |
-| specialWorkspace | 400ms | 300ms (n/a if special workspaces are fully removed — check whether this leaf is still meaningful once that's done) |
-| fade | 600ms | 400ms |
-| fadeDim | 600ms | 400ms |
-| border | 600ms | 400ms |
-
-Treat as a starting point — best judged by actually feeling it once running, not just read as numbers.
+Durations reduced ~30-40% from upstream (confirmed applied correctly on the real repo, including correctly dropping the now-meaningless `specialWorkspace` animation leaf once special workspaces were removed entirely). Same curves/styles as upstream, just faster.
 
 ---
 
-## Things intentionally NOT done (don't scope-creep these back in)
-- None of end-4's 8 bonus features: OCR-to-clipboard, Google Lens-style region search, screen translation, AI summary (needs local Ollama), on-screen keyboard toggle, light/dark mode toggle, cursor zoom, VM submap.
-- No standalone in-shell file explorer (there isn't one upstream either — `components/filedialog/` is just an open/save picker, not a file manager; Thunar covers this at the OS level).
-- Bar itself (OS icon, workspaces, active window, clock, status icons, tray, power button + all its popouts) — **stays exactly as upstream**, no cuts requested.
-- Nothing from caelestia's optional components (spotify/spicetify, other code editors, discord, todoist, uwsm, zen browser, the Firefox theme) unless explicitly asked for later.
+## Things intentionally NOT done — don't scope-creep these back in
+- None of end-4's 8 bonus features (OCR, Lens-search, translation, AI summary, on-screen keyboard, light/dark toggle, cursor zoom, VM submap).
+- No standalone in-shell file explorer — Thunar covers this at the OS level.
+- Bar itself (workspaces, clock, tray, status icons, power button + popouts) — stays exactly as upstream, no cuts requested.
+- Numpad workspace bindings, a direct poweroff quick-bind — explicitly declined.
+- Nothing from caelestia's optional components (spotify/spicetify, other editors, discord, todoist, uwsm, zen browser, Firefox theme) unless explicitly asked for.
