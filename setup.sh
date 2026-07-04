@@ -102,9 +102,18 @@ fi
 
 # ---------------------------------------------------------------- 4. build shell plugin
 log "building the native Quickshell plugin"
+# Pre-approve shell/.envrc so direnv never blocks on it - neither here nor
+# the first time a shell is opened inside shell/ after bootstrap
+(cd "$REPO_DIR/shell" && direnv allow)
 (
     cd "$REPO_DIR/shell"
-    cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DINSTALL_QSCONFDIR=$QS_CONF_DIR"
+    # -DVERSION: this fork has no git tags, so CMakeLists' `git describe
+    # --tags` fallback dies with "VERSION is not set and failed to get from
+    # git". Empty VERSION + explicit short rev instead (upstream's own CI
+    # overrides the same two vars).
+    cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+        -DVERSION="" -DGIT_REVISION="$(git rev-parse --short HEAD)" \
+        "-DINSTALL_QSCONFDIR=$QS_CONF_DIR"
     cmake --build build
     cmake --install build
 )
