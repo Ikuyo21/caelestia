@@ -148,12 +148,17 @@ packages=(
 # variant. The -git package Provides= the same name, so nothing loses its
 # dependency. Removing it up front is what keeps the conflict from aborting
 # an install transaction (which is exactly what happened in a real run).
-if pacman -Q ttf-material-symbols-variable &>/dev/null; then
+# NB: `pacman -Q <name>` resolves Provides= (once the -git variant is
+# installed, it matches the old name too - query.c falls back to
+# alpm_find_satisfier), while -R only takes literal names. So compare the
+# resolved package name and only remove the genuine leftover.
+if [[ "$(pacman -Qq ttf-material-symbols-variable 2>/dev/null)" == "ttf-material-symbols-variable" ]]; then
     if [[ $DRY_RUN == 1 ]]; then
         plan "remove superseded ttf-material-symbols-variable (pacman -Rdd; the -git variant replaces it)"
     else
         log "removing superseded ttf-material-symbols-variable (conflicts with the -git variant)"
-        sudo pacman -Rdd --noconfirm ttf-material-symbols-variable
+        sudo pacman -Rdd --noconfirm ttf-material-symbols-variable ||
+            warn "could not remove ttf-material-symbols-variable - the -git variant's install may hit a conflict"
     fi
 fi
 
