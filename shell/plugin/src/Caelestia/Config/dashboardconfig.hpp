@@ -8,12 +8,10 @@ class DashboardPerformance : public ConfigObject {
     Q_OBJECT
     QML_ANONYMOUS
 
-    CONFIG_PROPERTY(bool, showBattery, true)
     CONFIG_PROPERTY(bool, showGpu, true)
     CONFIG_PROPERTY(bool, showCpu, true)
     CONFIG_PROPERTY(bool, showMemory, true)
     CONFIG_PROPERTY(bool, showStorage, true)
-    CONFIG_PROPERTY(bool, showNetwork, true)
 
 public:
     explicit DashboardPerformance(QObject* parent = nullptr)

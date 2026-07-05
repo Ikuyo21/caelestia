@@ -64,12 +64,6 @@ PageBase {
 
         ToggleRow {
             first: true
-            text: qsTr("Battery")
-            checked: Config.dashboard.performance.showBattery
-            onToggled: GlobalConfig.dashboard.performance.showBattery = checked
-        }
-
-        ToggleRow {
             text: qsTr("GPU")
             checked: Config.dashboard.performance.showGpu
             onToggled: GlobalConfig.dashboard.performance.showGpu = checked
@@ -88,16 +82,10 @@ PageBase {
         }
 
         ToggleRow {
+            last: true
             text: qsTr("Storage")
             checked: Config.dashboard.performance.showStorage
             onToggled: GlobalConfig.dashboard.performance.showStorage = checked
-        }
-
-        ToggleRow {
-            last: true
-            text: qsTr("Network")
-            checked: Config.dashboard.performance.showNetwork
-            onToggled: GlobalConfig.dashboard.performance.showNetwork = checked
         }
 
         // Behaviour
