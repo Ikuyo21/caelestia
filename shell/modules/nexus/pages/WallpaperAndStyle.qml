@@ -215,8 +215,15 @@ PageBase {
             icon: "opacity"
             label: qsTr("Transparency")
             enabled: Colours.transparency.enabled
-            valueLabel: qsTr("base %1").arg(+Config.appearance.transparency.base.toFixed(2))
-            value: Config.appearance.transparency.base
+            // Transparency is a global-only option (see tokensattached.cpp:
+            // "Transparency is always global"), so the per-monitor Config
+            // overlay never mirrors it - reading Config.appearance here would
+            // freeze the slider at the default while the write took effect.
+            // Read from GlobalConfig, the same object we write to, so the
+            // position tracks. Rounding above can read Config because its
+            // scale is a normal (per-monitor) property the overlay does sync.
+            valueLabel: qsTr("base %1").arg(+GlobalConfig.appearance.transparency.base.toFixed(2))
+            value: GlobalConfig.appearance.transparency.base
             onMoved: v => GlobalConfig.appearance.transparency.base = +v.toFixed(2)
         }
 
