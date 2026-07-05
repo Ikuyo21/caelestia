@@ -273,6 +273,21 @@ else
 fi
 
 # ---------------------------------------------------------------- 5+6. backup & symlink
+# ~/.config/caelestia is a third config dir (user overrides), distinct from
+# ~/.config/hypr and the Quickshell config dir. hyprland.lua auto-creates
+# hypr-vars.lua/hypr-user.lua in it via io.open(..., "w") - which silently
+# no-ops when the parent dir is missing, so the require() right after trips
+# Hyprland's emergency mode on first login. It must exist before the hypr
+# symlink makes hyprland.lua reachable.
+if [[ ! -d "$CONFIG_DIR/caelestia" ]]; then
+    if [[ $DRY_RUN == 1 ]]; then
+        plan "create $CONFIG_DIR/caelestia (user-override dir hyprland.lua writes into)"
+    else
+        log "creating $CONFIG_DIR/caelestia (user-override dir)"
+        mkdir -p "$CONFIG_DIR/caelestia"
+    fi
+fi
+
 # link <repo path> <dest>: idempotent - a link that already points at the
 # repo is left alone; anything else in the way (file, directory, or a
 # foreign symlink from someone's previous dotfiles) is moved to
