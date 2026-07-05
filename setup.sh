@@ -235,6 +235,37 @@ else
     fi
 fi
 
+# ---------------------------------------------------------------- 3b. wallpapers
+# The shell's picker and bin/caelestia default to ~/Pictures/Wallpapers/
+# caelestia (userpaths.hpp / WALLS_DIR). Populate it with a curated slice of
+# dharmx/walls via a blobless sparse checkout - only these 6 folders (~753 MiB
+# / 448 files) instead of the full ~3.3 GiB repo. Lives outside the dotfiles
+# repo and is never committed. Idempotent: the .git marker means "already
+# fetched", so a re-run re-downloads nothing.
+walls_dir="$HOME/Pictures/Wallpapers/caelestia"
+walls_cats=(anime boccha chillop digital evangelion manga)
+if [[ -d "$walls_dir/.git" ]]; then
+    log "wallpapers already fetched ($walls_dir)"
+elif [[ $DRY_RUN == 1 ]]; then
+    plan "sparse-checkout dharmx/walls [${walls_cats[*]}] into $walls_dir (~753 MiB, blobless)"
+elif ! command -v git >/dev/null; then
+    warn "git missing - skipped the wallpaper fetch (re-run setup.sh after installing git)"
+else
+    log "fetching wallpapers into $walls_dir (~753 MiB, blobless sparse checkout)"
+    mkdir -p "$(dirname "$walls_dir")"
+    # partial dir from an aborted earlier run would block a clean clone
+    [[ -e "$walls_dir" ]] && ! [[ -d "$walls_dir/.git" ]] && rm -rf "$walls_dir"
+    if git clone --filter=blob:none --no-checkout --depth 1 \
+        https://github.com/dharmx/walls.git "$walls_dir" &&
+        git -C "$walls_dir" sparse-checkout set --no-cone "${walls_cats[@]}" &&
+        git -C "$walls_dir" checkout; then
+        :
+    else
+        rm -rf "$walls_dir" # don't leave a half-clone that the idempotency check would trust
+        warn "wallpaper fetch failed - re-run setup.sh to retry (the shell works without it, the picker is just empty)"
+    fi
+fi
+
 # ---------------------------------------------------------------- 4. build shell plugin
 # Mirrors the upstream README's documented install exactly: prefix / puts
 # the compiled QML modules in /usr/lib/qt6/qml where quickshell actually

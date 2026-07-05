@@ -22,7 +22,7 @@ set -euo pipefail
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/caelestia"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/caelestia"
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
-WALLS_DIR="${CAELESTIA_WALLS_DIR:-$HOME/Pictures/Wallpapers}"
+WALLS_DIR="${CAELESTIA_WALLS_DIR:-$HOME/Pictures/Wallpapers/caelestia}"
 
 PATH_FILE="$STATE_DIR/wallpaper/path.txt"
 MODE_FILE="$STATE_DIR/scheme-mode.txt"
@@ -30,6 +30,17 @@ SEED_FILE="$STATE_DIR/scheme-seed.txt"
 SCHEME_FILE="$STATE_DIR/scheme.json"
 STAGING_FILE="$CACHE_DIR/scheme.staging.json"
 PREVIEW_FILE="$CACHE_DIR/scheme.preview.json"
+HYPR_SCHEME="$CONFIG_DIR/hypr/scheme/current.lua"
+
+# Light mode is a fixed cream theme. matugen's own light colours are tinted by
+# the seed/wallpaper (cool, not cream), so the neutral M3 roles are overridden
+# with a warm cream palette after rendering. Values are hex_stripped (no #),
+# matching the scheme templates. In pick-your-own ("custom") mode the accent is
+# also deepened to #097385: plain #29D3F0 is only 1.6:1 on the cream background
+# (unreadable), while #097385 is 4.99:1 - WCAG AA. Dynamic mode keeps the
+# wallpaper-derived accent. See the vault Decisions entry for the full palette.
+CREAM_NEUTRALS='{"background":"f7f3ea","onBackground":"33302a","surface":"f7f3ea","surfaceDim":"e6e0d2","surfaceBright":"fdfaf3","surfaceContainerLowest":"ffffff","surfaceContainerLow":"f2ecdf","surfaceContainer":"efe9da","surfaceContainerHigh":"e9e2d1","surfaceContainerHighest":"e3dcc9","onSurface":"33302a","surfaceVariant":"e7e0d2","onSurfaceVariant":"7a7466","inverseSurface":"33302a","inverseOnSurface":"f7f3ea","outline":"7a7466","outlineVariant":"cfc7b6","shadow":"000000","scrim":"000000"}'
+CREAM_ACCENT='{"primary":"097385","onPrimary":"f7f3ea","surfaceTint":"097385"}'
 
 die() {
     echo "caelestia: $*" >&2
@@ -40,18 +51,47 @@ mode() {
     cat "$MODE_FILE" 2>/dev/null || echo dark
 }
 
+# cream_overrides <name>: the jq object of light-mode colour overrides for this
+# scheme - cream neutrals always, plus the deepened accent in pick-your-own
+# ("custom") mode. Empty object outside light mode, so every merge is a no-op
+# in dark mode.
+cream_overrides() {
+    [[ "$(mode)" == light ]] || { echo '{}'; return; }
+    if [[ "$1" == custom ]]; then
+        jq -cn --argjson n "$CREAM_NEUTRALS" --argjson a "$CREAM_ACCENT" '$n + $a'
+    else
+        echo "$CREAM_NEUTRALS"
+    fi
+}
+
 # finalize_scheme <staging file> <name> [dest]
-# Patch metadata into a rendered template. With no dest, print to stdout.
+# Patch metadata (and, in light mode, the cream palette) into a rendered
+# template. With no dest, print to stdout.
 finalize_scheme() {
     local staging="$1" name="$2" dest="${3:-}"
     local patched
     patched="$(jq --arg name "$name" --arg mode "$(mode)" \
-        '.name = $name | .flavour = "" | .mode = $mode' "$staging")"
+        --argjson cream "$(cream_overrides "$name")" \
+        '.name = $name | .flavour = "" | .mode = $mode | .colours += $cream' "$staging")"
     if [[ -n "$dest" ]]; then
         printf '%s\n' "$patched" > "$dest.tmp" && mv "$dest.tmp" "$dest"
     else
         printf '%s\n' "$patched"
     fi
+}
+
+# In light mode, overwrite the same neutral roles in the matugen-rendered
+# hypr/scheme/current.lua so window borders/gaps stay coherent with the cream
+# shell (matugen renders it with its own seed-tinted light neutrals). The key
+# anchor (name + "=") keeps `surface` from matching surfaceContainer/Variant/
+# Tint, and `primary` from matching primaryContainer/onPrimary.
+apply_cream_to_hypr() {
+    [[ "$(mode)" == light && -f "$HYPR_SCHEME" ]] || return 0
+    local name key val
+    name="$([[ -s "$SEED_FILE" ]] && echo custom || echo dynamic)"
+    while IFS=$'\t' read -r key val; do
+        sed -i -E "s/^([[:space:]]*${key}[[:space:]]*=[[:space:]]*\")[0-9a-fA-F]+(\")/\1${val}\2/" "$HYPR_SCHEME"
+    done < <(cream_overrides "$name" | jq -r 'to_entries[] | "\(.key)\t\(.value)"')
 }
 
 # regenerate colors + all templates from current seed or wallpaper
@@ -65,6 +105,7 @@ regenerate() {
         matugen image "$(cat "$PATH_FILE")" -m "$(mode)" --source-color-index 0
         finalize_scheme "$STAGING_FILE" dynamic "$SCHEME_FILE"
     fi
+    apply_cream_to_hypr
     # hypr/scheme/current.lua changed; hyprland only watches its main config
     [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && hyprctl reload >/dev/null 2>&1 || true
 }
