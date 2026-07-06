@@ -7,7 +7,7 @@ Scope {
     Connections {
         function onLoaded(): void {
             if (GlobalConfig.utilities.toasts.configLoaded)
-                Toaster.toast(qsTr("Config loaded"), qsTr("Config loaded successfully!"), "rule_settings");
+                Toaster.toast(qsTr("Config loaded"), qsTr("Changes applied"), "rule_settings");
         }
 
         function onLoadFailed(error: string, screen: string): void {

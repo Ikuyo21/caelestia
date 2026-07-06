@@ -178,6 +178,7 @@ class DashboardTokens : public ConfigObject {
     // Minimal dashboard (stat tiles + slim media row); the old user card /
     // clock / big media / hero card tokens went with their widgets
     CONFIG_PROPERTY(int, statTileWidth, 100)
+    CONFIG_PROPERTY(int, statBarHeight, 4)
     CONFIG_PROPERTY(int, mediaArtSize, 32)
 
 public:

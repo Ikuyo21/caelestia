@@ -78,8 +78,39 @@ PageBase {
                     radius: Tokens.rounding.large
                     color: selected ? Colours.palette.m3primaryContainer : Colours.palette.m3surfaceContainer
 
+                    // Selection carries a second indicator beyond the fill:
+                    // a hairline plus the corner check below
+                    border.width: selected ? 1 : 0
+                    border.color: Qt.alpha(Colours.palette.m3primary, 0.5)
+
                     Behavior on color {
                         CAnim {}
+                    }
+
+                    MaterialIcon {
+                        anchors.top: parent.top
+                        anchors.right: parent.right
+                        anchors.margins: Tokens.padding.small
+
+                        text: "check_circle"
+                        color: Colours.palette.m3onPrimaryContainer
+                        fontStyle: Tokens.font.icon.medium
+                        fill: 1
+
+                        scale: card.selected ? 1 : 0
+                        opacity: card.selected ? 1 : 0
+
+                        Behavior on scale {
+                            Anim {
+                                type: Anim.FastSpatial
+                            }
+                        }
+
+                        Behavior on opacity {
+                            Anim {
+                                type: Anim.FastEffects
+                            }
+                        }
                     }
 
                     ColumnLayout {

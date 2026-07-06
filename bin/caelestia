@@ -46,8 +46,9 @@ HYPR_SCHEME="$CONFIG_DIR/hypr/scheme/current.lua"
 PINK_ACCENT='{"primary":"e39aae","surfaceTint":"e39aae","onPrimary":"2e1119"}'
 # CREAM_NEUTRALS (applied in Light, both fixed + dynamic): warm cream, since
 # matugen's light neutrals are seed-tinted. bg #F5F0E5, warm-dark text #33302A
-# (11.6:1), muted #7A7466.
-CREAM_NEUTRALS='{"background":"f5f0e5","onBackground":"33302a","surface":"f5f0e5","surfaceDim":"e6e0d2","surfaceBright":"fbf7ee","surfaceContainerLowest":"ffffff","surfaceContainerLow":"efe9db","surfaceContainer":"e9e2d1","surfaceContainerHigh":"e3dbc8","surfaceContainerHighest":"ddd4bf","onSurface":"33302a","surfaceVariant":"e7e0d0","onSurfaceVariant":"7a7466","inverseSurface":"33302a","inverseOnSurface":"f5f0e5","outline":"7a7466","outlineVariant":"cfc7b6","shadow":"000000","scrim":"000000"}'
+# (11.6:1), muted #645E4D (5.7:1 on bg, 5.0:1 on tile surfaces - the earlier
+# #7A7466 fell to 3.6:1 on surfaceContainer, under AA for small labels).
+CREAM_NEUTRALS='{"background":"f5f0e5","onBackground":"33302a","surface":"f5f0e5","surfaceDim":"e6e0d2","surfaceBright":"fbf7ee","surfaceContainerLowest":"ffffff","surfaceContainerLow":"efe9db","surfaceContainer":"e9e2d1","surfaceContainerHigh":"e3dbc8","surfaceContainerHighest":"ddd4bf","onSurface":"33302a","surfaceVariant":"e7e0d0","onSurfaceVariant":"645e4d","inverseSurface":"33302a","inverseOnSurface":"f5f0e5","outline":"645e4d","outlineVariant":"cfc7b6","shadow":"000000","scrim":"000000"}'
 
 die() {
     echo "caelestia: $*" >&2

@@ -76,7 +76,7 @@ PageBase {
         }
 
         ToggleRow {
-            text: qsTr("Memory")
+            text: qsTr("RAM")
             checked: Config.dashboard.performance.showMemory
             onToggled: GlobalConfig.dashboard.performance.showMemory = checked
         }

@@ -56,7 +56,9 @@ ConnectedRect {
                     id: valueLabel
 
                     color: Colours.palette.m3outline
-                    font: Tokens.font.body.small
+                    // Mono: the value changes while dragging; fixed-width
+                    // digits stop the label from jittering
+                    font: Tokens.font.mono.small
                 }
             }
 

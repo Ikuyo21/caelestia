@@ -14,11 +14,11 @@ Item {
     readonly property string msg: {
         // Errors
         if (pam.fprint.state === Pam.Error)
-            return qsTr("FP ERROR: %1").arg(pam.fprint.message);
+            return qsTr("Fingerprint error: %1").arg(pam.fprint.message);
         if (pam.howdy.state === Pam.Error)
-            return qsTr("FACE ERROR: %1").arg(pam.howdy.message);
+            return qsTr("Face recognition error: %1").arg(pam.howdy.message);
         if (pam.state === Pam.Error)
-            return qsTr("PW ERROR: %1").arg(pam.passwd.message);
+            return qsTr("Password error: %1").arg(pam.passwd.message);
 
         // Fprint/howdy fail
         if (pam.state !== Pam.MaxTries) {

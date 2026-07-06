@@ -113,7 +113,7 @@ All three go through matugen; `bin/caelestia`'s `scheme_overrides()` patches the
 
 **Fixed/manual palette values:**
 - Dark: bg `#16171b`, text `#E8E8EA` / `#9A9AA0` secondary, accent `#E39AAE`
-- Light/cream: bg `#F5F0E5`, surface ramp down to `#DDD4BF` (full ramp in `bin/caelestia`), warm dark text `#33302A` (11.6:1), muted `#7A7466`, same pink accent
+- Light/cream: bg `#F5F0E5`, surface ramp down to `#DDD4BF` (full ramp in `bin/caelestia`), warm dark text `#33302A` (11.6:1), muted `#645E4D` (AA on all cream surfaces; `#7A7466` failed on tiles), same pink accent
 
 matugen 4.x gotcha (hit in a real run): config.toml **must** contain a `[config]` table — `ConfigFile.config` is non-optional in its schema; without it every run dies with `missing field 'config'` pointing at line 1. Both matugen/config.toml and preview.toml carry `[config] version_check = false`. nvim/alacritty light cream is still a follow-up (they get matugen-light).
 

@@ -83,14 +83,16 @@ RowLayout {
                 StyledText {
                     animate: true
                     text: `${Math.round(tile.usage * 100)}%`
-                    font: Tokens.font.title.medium
+                    // Mono digits: percentages change every poll, and
+                    // fixed-width figures keep the tile from jittering
+                    font: Tokens.font.mono.builders.large.weight(Font.Medium).build()
                 }
 
                 StyledRect {
                     Layout.fillWidth: true
                     Layout.topMargin: Tokens.spacing.extraSmall / 2
-                    implicitHeight: 4
-                    radius: 2
+                    implicitHeight: Tokens.sizes.dashboard.statBarHeight
+                    radius: implicitHeight / 2
                     color: Colours.tPalette.m3surfaceContainerHighest
 
                     StyledRect {

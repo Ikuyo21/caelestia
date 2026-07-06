@@ -26,6 +26,11 @@ StyledRect {
     color: critical ? Colours.palette.m3secondaryContainer : Colours.tPalette.m3surfaceContainer
     radius: Tokens.rounding.large
 
+    // Hairline edge (mockup): separates the toast from whatever is behind it,
+    // and gives critical a second indicator beyond colour alone
+    border.width: 1
+    border.color: critical ? Qt.alpha(Colours.palette.m3error, 0.4) : Qt.alpha(Colours.palette.m3outlineVariant, 0.5)
+
     implicitHeight: inner.implicitHeight
 
     x: implicitWidth

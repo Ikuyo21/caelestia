@@ -90,7 +90,7 @@ Item {
 
                             anchors.centerIn: parent
 
-                            text: qsTr("Set it now!")
+                            text: qsTr("Choose wallpaper")
                             color: Colours.palette.m3onPrimary
                             font: Tokens.font.body.large
                         }

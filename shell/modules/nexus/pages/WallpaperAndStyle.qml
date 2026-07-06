@@ -305,6 +305,17 @@ PageBase {
                             wrapMode: TextEdit.NoWrap
                             textFormat: TextEdit.PlainText
                         }
+
+                        // Empty state: what goes here and where it ends up
+                        StyledText {
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+
+                            visible: !artEdit.text && !artEdit.activeFocus
+                            text: qsTr("Paste ASCII art here")
+                            color: Colours.palette.m3outline
+                            font: Tokens.font.mono.small
+                        }
                     }
                 }
 
@@ -319,15 +330,25 @@ PageBase {
                     }
 
                     IconTextButton {
-                        icon: "save"
-                        text: qsTr("Save")
+                        icon: savedTimer.running ? "check" : "save"
+                        text: savedTimer.running ? qsTr("Saved") : qsTr("Save")
                         font: Tokens.font.body.large
                         isRound: true
                         shapeMorph: true
                         type: IconTextButton.Tonal
                         horizontalPadding: Tokens.padding.extraLarge
                         verticalPadding: Tokens.padding.medium
-                        onClicked: logoFile.setText(artEdit.text)
+                        onClicked: {
+                            logoFile.setText(artEdit.text);
+                            savedTimer.restart();
+                        }
+
+                        // Brief confirmation, then back to the idle label
+                        Timer {
+                            id: savedTimer
+
+                            interval: 2000
+                        }
                     }
                 }
             }
