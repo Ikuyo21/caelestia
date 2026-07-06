@@ -175,15 +175,10 @@ class DashboardTokens : public ConfigObject {
     Q_OBJECT
     QML_ANONYMOUS
 
-    CONFIG_PROPERTY(int, userWidth, 340)
-    CONFIG_PROPERTY(int, logoSize, 30)
-    CONFIG_PROPERTY(int, uptimeSize, 30)
-    CONFIG_PROPERTY(int, dateTimeWidth, 110)
-    CONFIG_PROPERTY(int, mediaWidth, 200)
-    CONFIG_PROPERTY(int, mediaProgressSweep, 180)
-    CONFIG_PROPERTY(int, mediaProgressThickness, 6)
-    CONFIG_PROPERTY(int, perfHeroCardWidth, 400)
-    CONFIG_PROPERTY(int, perfPlaceholderWidth, 700)
+    // Minimal dashboard (stat tiles + slim media row); the old user card /
+    // clock / big media / hero card tokens went with their widgets
+    CONFIG_PROPERTY(int, statTileWidth, 100)
+    CONFIG_PROPERTY(int, mediaArtSize, 32)
 
 public:
     explicit DashboardTokens(QObject* parent = nullptr)
@@ -302,6 +297,7 @@ class NexusTokens : public ConfigObject {
     CONFIG_PROPERTY(int, minWidth, 800)
     CONFIG_PROPERTY(int, minHeight, 500)
     CONFIG_PROPERTY(int, maxNavWidth, 600)
+    CONFIG_PROPERTY(int, asciiArtHeight, 180)
     CONFIG_PROPERTY(int, maxContentWidth, 800)
     CONFIG_PROPERTY(int, popupWidth, 300)
     CONFIG_PROPERTY(int, minPopupHeight, 200)
