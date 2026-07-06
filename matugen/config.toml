@@ -11,6 +11,13 @@
 # moves it to ~/.local/state/caelestia/scheme.json atomically (the shell
 # watches that file). Generated files live under state/, never in this repo.
 
+# matugen 4.x requires a [config] table (ConfigFile.config is non-optional in
+# its schema - without it every run dies with "missing field 'config'"). It
+# may be empty; version_check=false just skips matugen's online update ping so
+# scheme regeneration never depends on the network.
+[config]
+version_check = false
+
 [templates.shell-scheme]
 input_path = '~/.config/matugen/templates/scheme.json'
 output_path = '~/.cache/caelestia/scheme.staging.json'

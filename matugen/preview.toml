@@ -2,6 +2,10 @@
 # Renders just the shell scheme to a throwaway cache path so live wallpaper
 # previews never touch real state or the other templates.
 
+# Required by matugen 4.x even for a preview run (see config.toml).
+[config]
+version_check = false
+
 [templates.shell-scheme-preview]
 input_path = '~/.config/matugen/templates/scheme.json'
 output_path = '~/.cache/caelestia/scheme.preview.json'
