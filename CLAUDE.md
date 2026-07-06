@@ -7,6 +7,7 @@ Fork of [caelestia-dots/shell](https://github.com/caelestia-dots/shell) (Quicksh
 - **A stale public repo, `Ikuyo21/dotfiles`, also exists** — an early interim push before the private repo was set up as canonical. It should be deleted manually (API can't delete it) and should NOT be worked in or treated as current.
 - Nearly the entire spec is implemented: shell fork with nexus trim, weather removal, dashboard fusion, session menu redesign, caelestia-cli replacement, keybind migrations, terminal stack (fish/alacritty/fastfetch/starship), Neovim config (kickstart base, LSP, colorscheme, dashboard, statusline), and `setup.sh`.
 - **A real run of `setup.sh` on the actual Arch machine surfaced genuine bugs** — see "Known issues" below. The repo-side fixes for all of them landed 2026-07-04; what remains is machine-side verification (rerun setup.sh, matugen end-to-end test, orphan cleanup, cold-start measurement).
+- **2026-07-06 session (large batch):** two real install bugs fixed (matugen 4.x requires a `[config]` table in config.toml — was dying with `missing field 'config'`; `tree-sitter-cli` added for nvim-treesitter's parser compiles). **Theme system restructured to exactly three options** — Dark (fixed), Light (fixed cream `#F5F0E5`), Dynamic (wallpaper) — with the seed-color picker deleted and the accent swapped cyan→pink `#E39AAE` everywhere (see Theming). Dashboard and notification toasts rebuilt to approved minimal mockups (see their sections). New: paste-and-save ASCII art box in Wallpaper & style writes the fastfetch logo (now read from `~/.local/state/caelestia/logo.txt`, seeded by setup.sh; tinted ANSI magenta = themed pink). Nexus window treats any minimize request as close (quickshell `FloatingWindow.minimized` → destroy). Alacritty gets an explicit `rounding = 20` windowrule. All verified via mock-harness runs + static checks; plugin rebuild and visual pass remain machine-side.
 - **2026-07-05 session: fonts unified + setup.sh hardened.** The shell plugin's mono default is now `JetBrainsMono Nerd Font` (was upstream's never-installed `CaskaydiaCove NF`; exact string verified from the Arch package's font name tables — group.lua's `JetBrains Mono NF` matched nothing and is fixed too). Two latent fresh-install bugs found and fixed: nothing put `~/.local/bin` on the session PATH (keybinds/`execDetached` calls to `caelestia*` would fail; fixed in `hypr/hyprland/env.lua`), and the plugin install step could never have worked unprivileged (now upstream's documented `-DCMAKE_INSTALL_PREFIX=/` + `sudo cmake --install` + chown of the home config dir). setup.sh rewritten: `--dry-run`, per-package AUR installs with an end-of-run failure report, foreign-symlink-aware timestamped backups, chsh prompt, NetworkManager conflict detection, scheme.json re-run guard. Verified via 6 mocked persona scenarios (fresh/ricer/idempotent/failure-recovery/dry-run) in a sandboxed Git Bash harness; the real-Arch rerun and a plugin rebuild (hpp string change) are still machine-side.
 
 ## Philosophy
@@ -83,8 +84,8 @@ The shell is built via CMake, not purely symlinked, mirroring upstream's documen
 ### Weather — verified completely gone
 Zero matches anywhere in the shell for weather-related files or references, including the underlying `services/Weather.qml` itself.
 
-### Dashboard — verified fused into one view, no tabs
-`Tabs.qml` and tab navigation confirmed removed from `Content.qml`. Kept: User card, DateTime, compact Media widget (cover art + controls, no lyrics), Performance cards simplified to plain bars + text instead of circular gauges/shape-morphing.
+### Dashboard — rebuilt to the approved minimal mockup (2026-07-06)
+Four small stat tiles in a row (CPU/GPU/RAM/Storage: muted label, percentage, thin pink progress bar — no icons, no circular gauges) plus one slim media row (32px art thumbnail via `Players.getArtUrl`, track/artist, single play/pause icon, no progress arc/skip buttons/position polling). **User card, DateTime, and the big Media widget are gone** (with their facePicker plumbing and dashboard tokens); per-tile visibility toggles in nexus survive. Earlier states (tabbed upstream → fused cards → this) are history.
 
 ### Lock screen
 Weather and media widgets cut, Center/NotifDock/LockSurface kept.
@@ -100,17 +101,21 @@ All 5 toggles gone, along with every window rule that pinned an app to one (`bto
 
 ---
 
-## Theming architecture — two modes, one pipeline
-Both modes go through matugen, difference is only the seed input:
-- **Dynamic**: `matugen image <wallpaper>`
-- **Pick your own**: `matugen color <hex>`
+## Theming architecture — three fixed options, one pipeline (restructured 2026-07-06)
+**No manual color picker anymore.** Exactly three themes, selected by the 3-way cards in `ColourSelect.qml` (rebuilt again from the old seed-picker version):
+- **Dark** (fixed): matugen dark neutrals from the pink seed, accent pinned to `#E39AAE` → `caelestia scheme set -c e39aae -m dark`
+- **Light** (fixed, cream): warm cream neutrals + pinned pink accent → `caelestia scheme set -c e39aae -m light`
+- **Dynamic**: whole palette from the wallpaper, untouched → `caelestia scheme set -w -m dark`
 
-`#29D3F0` (electric cyan) is the default seed, not a hardcoded fallback. The color picker UI (`ColourSelect.qml`) was built from scratch — it was an unfinished upstream stub, nothing to extend.
+All three go through matugen; `bin/caelestia`'s `scheme_overrides()` patches the fixed parts after rendering (`finalize_scheme` for the shell's scheme.json, `apply_overrides_to_hypr` for window borders). Dynamic-dark is a byte-identical no-op.
+
+**Accent: `#E39AAE` (soft dusty rose) everywhere** — 8.1:1 on the dark bg, `onPrimary #2E1119` (7.85:1 on pink fills). NOTE: as accent-coloured *text* on the cream light bg it is only 1.95:1 — acceptable because light mode uses it for fills (progress bars, pills, buttons), not body text; deepen toward `#C8375F`+ if that ever changes (computed ladder in the vault). The two approved mockups show `#D2704A` coral, but the written spec's `#E39AAE` governs (flagged in the vault).
 
 **Fixed/manual palette values:**
-- Background: `#16171b`, Text: `#E8E8EA` / `#9A9AA0` secondary, Accent: `#29D3F0`
+- Dark: bg `#16171b`, text `#E8E8EA` / `#9A9AA0` secondary, accent `#E39AAE`
+- Light/cream: bg `#F5F0E5`, surface ramp down to `#DDD4BF` (full ramp in `bin/caelestia`), warm dark text `#33302A` (11.6:1), muted `#7A7466`, same pink accent
 
-**Light/cream mode (2026-07-06):** the dark↔light toggle (`Colours.setMode` → `caelestia scheme set -m`) works because matugen 4.1.0's `.default` follows `-m` (see Known Issues #5). matugen's own light colours are seed-tinted, so light mode overrides the neutral M3 roles with a fixed warm cream palette *after* matugen renders — `bin/caelestia` (`cream_overrides`/`finalize_scheme` for the shell scheme.json, `apply_cream_to_hypr` for window borders). Cream: bg `#F7F3EA`, surface `#EFE9DA` (full ramp in the script), text `#33302A`, muted `#7A7466`. The accent deepens to `#097385` in light mode (plain `#29D3F0` is only 1.6:1 on cream — unreadable; `#097385` is 4.99:1, WCAG AA); the deepened accent applies in pick-your-own mode only, dynamic keeps the wallpaper accent. Dark mode is a byte-identical no-op. nvim/alacritty light cream is a follow-up (they still get matugen-light).
+matugen 4.x gotcha (hit in a real run): config.toml **must** contain a `[config]` table — `ConfigFile.config` is non-optional in its schema; without it every run dies with `missing field 'config'` pointing at line 1. Both matugen/config.toml and preview.toml carry `[config] version_check = false`. nvim/alacritty light cream is still a follow-up (they get matugen-light).
 
 **Sliders — verified they bind to real existing properties:**
 - Roundness -> `Tokens.rounding.scale` only. Transparency -> `AppearanceConfig.transparency`. Blur -> Hyprland's `decoration:blur:size`/`passes` via `HyprExtras`. All three live in the nexus "Wallpaper & style" page.
@@ -124,14 +129,14 @@ Base: kickstart.nvim (uses Neovim's own built-in `vim.pack`, not `lazy.nvim` —
 
 **LSP:** `clangd` for C/C++ (confirmed correct choice, do not swap to ccls — see Known Issues #7). `qml-language-server` (cushycush/Go-based, the `-bin` AUR variant) for QML — preferred over Qt's own `qmlls`, which can't resolve Quickshell-specific types. Treesitter grammar is `qmljs`, not `qml`. Empty `.qmlls.ini` next to `shell.qml`, gitignored.
 
-**Colorscheme** — ties into the dynamic/pick-your-own toggle via matugen's M3 roles:
+**Colorscheme** — matugen-rendered when `nvim-colors.lua` exists, fixed fallback otherwise (accent swapped to pink 2026-07-06):
 
 | Syntax role | Fixed hex | Dynamic matugen role |
 |---|---|---|
 | Background | `#16171b` | `background` |
 | Default text | `#E8E8EA` | `on_background` |
-| Keywords | `#29D3F0` | `primary` |
-| Strings | `#6FA8B5` | `secondary` |
+| Keywords | `#E39AAE` (pink accent) | `primary` |
+| Strings | `#C4A1AB` (desaturated rose) | `secondary` |
 | Numbers | `#c9a86a` | `tertiary` |
 | Comments | `#6a6d73`, italic | `outline_variant` |
 | Types | `#f2f2f3` | `on_surface` |

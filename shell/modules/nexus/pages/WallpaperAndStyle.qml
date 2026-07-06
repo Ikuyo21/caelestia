@@ -2,12 +2,14 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Quickshell.Io
 import Caelestia.Components
 import Caelestia.Config
 import qs.components
 import qs.components.controls
 import qs.components.images
 import qs.services
+import qs.utils
 import qs.modules.nexus.common
 
 PageBase {
@@ -180,19 +182,13 @@ PageBase {
         ToggleRow {
             Layout.topMargin: Tokens.spacing.extraSmall / 2 - parent.spacing
 
+            // Dark/Light/Dynamic selection lives on the Colours page now (the
+            // 3-way selector); no separate mode toggle here
+            last: true
             text: qsTr("Transparency")
             subtext: qsTr("Base %1, layers %2").arg(Colours.transparency.base).arg(Colours.transparency.layers)
             checked: Colours.transparency.enabled
             onToggled: GlobalConfig.appearance.transparency.enabled = checked
-        }
-
-        ToggleRow {
-            Layout.topMargin: Tokens.spacing.extraSmall / 2 - parent.spacing
-
-            last: true
-            text: qsTr("Dark theme")
-            checked: !Colours.light
-            onToggled: Colours.setMode(checked ? "dark" : "light")
         }
 
         // Appearance sliders (see CLAUDE.md "Corner rounding & blur/transparency"):
@@ -250,6 +246,90 @@ PageBase {
                     "decoration:blur:size": Math.round(v * 20),
                     "decoration:blur:passes": 2
                 });
+            }
+        }
+
+        // Paste-and-save ASCII art for the fastfetch logo. fastfetch reads
+        // ~/.local/state/caelestia/logo.txt (seeded from the repo default by
+        // setup.sh); saving here replaces it. Plain text only - no uploads,
+        // no conversion.
+        SectionHeader {
+            text: qsTr("Fastfetch logo")
+        }
+
+        ConnectedRect {
+            first: true
+            last: true
+            Layout.fillWidth: true
+            implicitHeight: artLayout.implicitHeight + Tokens.padding.largeIncreased * 2
+
+            FileView {
+                id: logoFile
+
+                path: `${Paths.state}/logo.txt`
+                onLoaded: artEdit.text = text()
+            }
+
+            ColumnLayout {
+                id: artLayout
+
+                anchors.fill: parent
+                anchors.margins: Tokens.padding.largeIncreased
+                spacing: Tokens.spacing.medium
+
+                StyledRect {
+                    Layout.fillWidth: true
+                    implicitHeight: Tokens.sizes.nexus.asciiArtHeight
+                    radius: Tokens.rounding.medium
+                    color: Colours.tPalette.m3surfaceContainerHigh
+
+                    Flickable {
+                        anchors.fill: parent
+                        anchors.margins: Tokens.padding.medium
+
+                        clip: true
+                        contentWidth: artEdit.contentWidth
+                        contentHeight: artEdit.contentHeight
+                        flickableDirection: Flickable.HorizontalAndVerticalFlick
+
+                        TextEdit {
+                            id: artEdit
+
+                            width: Math.max(implicitWidth, parent.width)
+                            height: Math.max(implicitHeight, parent.height)
+
+                            color: Colours.palette.m3onSurface
+                            selectionColor: Qt.alpha(Colours.palette.m3primary, 0.4)
+                            selectedTextColor: color
+                            font: Tokens.font.mono.small
+                            wrapMode: TextEdit.NoWrap
+                            textFormat: TextEdit.PlainText
+                        }
+                    }
+                }
+
+                RowLayout {
+                    spacing: Tokens.spacing.medium
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        text: qsTr("Paste ASCII art; saving replaces the fastfetch logo")
+                        color: Colours.palette.m3onSurfaceVariant
+                        font: Tokens.font.label.small
+                    }
+
+                    IconTextButton {
+                        icon: "save"
+                        text: qsTr("Save")
+                        font: Tokens.font.body.large
+                        isRound: true
+                        shapeMorph: true
+                        type: IconTextButton.Tonal
+                        horizontalPadding: Tokens.padding.extraLarge
+                        verticalPadding: Tokens.padding.medium
+                        onClicked: logoFile.setText(artEdit.text)
+                    }
+                }
             }
         }
     }

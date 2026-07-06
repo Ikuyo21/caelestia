@@ -13,8 +13,8 @@ local fixed = {
   background = '#16171b',
   foreground = '#E8E8EA', -- default text
   muted = '#9A9AA0', -- secondary text
-  keyword = '#29D3F0', -- electric cyan accent
-  string = '#6FA8B5', -- desaturated teal, same hue family pulled back
+  keyword = '#E39AAE', -- soft dusty rose accent (the project pink)
+  string = '#C4A1AB', -- desaturated rose, same hue family pulled back
   number = '#c9a86a', -- muted warm gold (M3 tertiary: hue-rotated 60deg)
   comment = '#6a6d73', -- dimmed gray, italic
   type = '#f2f2f3', -- near-white for component/type names
@@ -22,7 +22,7 @@ local fixed = {
   surface0 = '#1d1e23',
   surface1 = '#24252b',
   surface2 = '#2c2d34',
-  selection = '#2a3b40',
+  selection = '#3b2a31',
   border = '#3a3b42',
 }
 
@@ -31,7 +31,7 @@ local semantic = {
   error = '#f2708a',
   warn = '#e5c076',
   ok = '#8fbf7f',
-  info = '#29D3F0',
+  info = '#E39AAE',
 }
 
 ---Read the matugen-generated palette if it exists, else use fixed values

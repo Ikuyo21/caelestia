@@ -5,10 +5,15 @@
 {
     "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
     "logo": {
-        "source": "~/.config/fastfetch/logo.txt",
+        // User-replaceable: the nexus "Wallpaper & style" page saves pasted
+        // ASCII art here (state file, seeded from the repo's logo.txt by
+        // setup.sh so the repo checkout never gets dirtied)
+        "source": "~/.local/state/caelestia/logo.txt",
         "type": "file",
+        // ANSI magenta is themed by matugen (primary_fixed_dim) - follows the
+        // pink accent in both fixed themes and the wallpaper in dynamic
         "color": {
-            "1": "cyan"
+            "1": "magenta"
         },
         "padding": {
             "top": 1,

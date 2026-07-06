@@ -125,8 +125,11 @@ packages=(
     noto-fonts noto-fonts-cjk noto-fonts-emoji
     # Shell/terminal
     fish eza zoxide direnv alacritty fastfetch matugen btop starship
-    # Neovim (clangd ships inside clang; no standalone clangd package exists)
-    neovim git clang qml-language-server-bin
+    # Neovim (clangd ships inside clang; no standalone clangd package exists).
+    # tree-sitter-cli provides the `tree-sitter` binary nvim-treesitter's `main`
+    # branch shells out to when compiling parsers - without it the headless
+    # bootstrap dies with ENOENT 'tree-sitter'.
+    neovim git clang qml-language-server-bin tree-sitter-cli
     # GTK/Qt theming
     adw-gtk-theme papirus-icon-theme papirus-folders
     # Auth/network/bluetooth
@@ -419,20 +422,32 @@ fi
 # PipeWire is socket-activated per user session; nothing to enable
 
 # ---------------------------------------------------------------- 9. first-run bootstrap
+# fastfetch reads its logo from state (user-replaceable via the nexus
+# "Wallpaper & style" ASCII art box); seed it with the repo default once
+if [[ -f "$STATE_DIR/logo.txt" ]]; then
+    log "fastfetch logo already present - keeping it (may be user art)"
+elif [[ $DRY_RUN == 1 ]]; then
+    plan "seed $STATE_DIR/logo.txt from the repo's fastfetch logo"
+else
+    log "seeding the fastfetch logo"
+    mkdir -p "$STATE_DIR"
+    cp "$REPO_DIR/fastfetch/logo.txt" "$STATE_DIR/logo.txt"
+fi
+
 if [[ -f "$STATE_DIR/scheme.json" ]]; then
     # never reset colours someone has since picked themselves
     log "colour scheme already generated - keeping current colours"
 elif [[ $DRY_RUN == 1 ]]; then
-    plan "generate the initial colour scheme (seed #29D3F0) via $BIN_DIR/caelestia"
+    plan "generate the initial colour scheme (Dark theme, pink seed #E39AAE) via $BIN_DIR/caelestia"
 elif [[ -x "$BIN_DIR/caelestia" ]] && command -v matugen >/dev/null && command -v jq >/dev/null; then
-    log "generating the initial colour scheme (seed #29D3F0)"
+    log "generating the initial colour scheme (Dark theme, pink seed #E39AAE)"
     mkdir -p "$STATE_DIR/wallpaper"
     # Through the wrapper, not raw matugen: the wrapper finalizes the shell's
     # scheme.json (jq metadata patch + atomic move) after matugen renders
-    "$BIN_DIR/caelestia" scheme set -c 29D3F0 ||
-        warn "initial scheme generation failed - retry with: caelestia scheme set -c 29D3F0"
+    "$BIN_DIR/caelestia" scheme set -c e39aae -m dark ||
+        warn "initial scheme generation failed - retry with: caelestia scheme set -c e39aae"
 else
-    warn "matugen/jq/caelestia unavailable - skipped scheme generation (run: caelestia scheme set -c 29D3F0)"
+    warn "matugen/jq/caelestia unavailable - skipped scheme generation (run: caelestia scheme set -c e39aae)"
 fi
 
 if [[ $DRY_RUN == 1 ]]; then

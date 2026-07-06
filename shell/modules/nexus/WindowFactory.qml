@@ -32,6 +32,15 @@ Singleton {
                     destroy();
             }
 
+            // Direct close only: FloatingWindow exposes a writable `minimized`
+            // (quickshell floatingwindow.hpp), so a minimize request from any
+            // source would otherwise park the window in limbo - treat it as
+            // a close instead
+            onMinimizedChanged: {
+                if (minimized)
+                    destroy();
+            }
+
             implicitWidth: nexus.implicitWidth
             implicitHeight: nexus.implicitHeight
 

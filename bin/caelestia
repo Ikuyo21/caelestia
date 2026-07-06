@@ -32,15 +32,22 @@ STAGING_FILE="$CACHE_DIR/scheme.staging.json"
 PREVIEW_FILE="$CACHE_DIR/scheme.preview.json"
 HYPR_SCHEME="$CONFIG_DIR/hypr/scheme/current.lua"
 
-# Light mode is a fixed cream theme. matugen's own light colours are tinted by
-# the seed/wallpaper (cool, not cream), so the neutral M3 roles are overridden
-# with a warm cream palette after rendering. Values are hex_stripped (no #),
-# matching the scheme templates. In pick-your-own ("custom") mode the accent is
-# also deepened to #097385: plain #29D3F0 is only 1.6:1 on the cream background
-# (unreadable), while #097385 is 4.99:1 - WCAG AA. Dynamic mode keeps the
-# wallpaper-derived accent. See the vault Decisions entry for the full palette.
-CREAM_NEUTRALS='{"background":"f7f3ea","onBackground":"33302a","surface":"f7f3ea","surfaceDim":"e6e0d2","surfaceBright":"fdfaf3","surfaceContainerLowest":"ffffff","surfaceContainerLow":"f2ecdf","surfaceContainer":"efe9da","surfaceContainerHigh":"e9e2d1","surfaceContainerHighest":"e3dcc9","onSurface":"33302a","surfaceVariant":"e7e0d2","onSurfaceVariant":"7a7466","inverseSurface":"33302a","inverseOnSurface":"f7f3ea","outline":"7a7466","outlineVariant":"cfc7b6","shadow":"000000","scrim":"000000"}'
-CREAM_ACCENT='{"primary":"097385","onPrimary":"f7f3ea","surfaceTint":"097385"}'
+# Three fixed themes (see the vault Decisions entry): Dark and Light both pin
+# the accent to the project pink; Dynamic keeps the wallpaper's accent. matugen
+# still generates the container/secondary/tertiary roles from the pink seed, so
+# these overrides only touch what has to be exact. Values are hex_stripped
+# (no #), matching the scheme templates.
+#
+# PINK_ACCENT (applied in Dark + Light, i.e. seed "custom" mode): #E39AAE is
+# 8.1:1 on the dark bg and pairs with a dark onPrimary (#2E1119, 7.85:1) for
+# text on pink fills. NOTE: as accent-coloured TEXT on the cream light bg it is
+# only 1.95:1 - it's used for fills (progress bars, active pills, buttons), not
+# body text, so this is acceptable; flagged in the vault if it needs deepening.
+PINK_ACCENT='{"primary":"e39aae","surfaceTint":"e39aae","onPrimary":"2e1119"}'
+# CREAM_NEUTRALS (applied in Light, both fixed + dynamic): warm cream, since
+# matugen's light neutrals are seed-tinted. bg #F5F0E5, warm-dark text #33302A
+# (11.6:1), muted #7A7466.
+CREAM_NEUTRALS='{"background":"f5f0e5","onBackground":"33302a","surface":"f5f0e5","surfaceDim":"e6e0d2","surfaceBright":"fbf7ee","surfaceContainerLowest":"ffffff","surfaceContainerLow":"efe9db","surfaceContainer":"e9e2d1","surfaceContainerHigh":"e3dbc8","surfaceContainerHighest":"ddd4bf","onSurface":"33302a","surfaceVariant":"e7e0d0","onSurfaceVariant":"7a7466","inverseSurface":"33302a","inverseOnSurface":"f5f0e5","outline":"7a7466","outlineVariant":"cfc7b6","shadow":"000000","scrim":"000000"}'
 
 die() {
     echo "caelestia: $*" >&2
@@ -51,28 +58,30 @@ mode() {
     cat "$MODE_FILE" 2>/dev/null || echo dark
 }
 
-# cream_overrides <name>: the jq object of light-mode colour overrides for this
-# scheme - cream neutrals always, plus the deepened accent in pick-your-own
-# ("custom") mode. Empty object outside light mode, so every merge is a no-op
-# in dark mode.
-cream_overrides() {
-    [[ "$(mode)" == light ]] || { echo '{}'; return; }
-    if [[ "$1" == custom ]]; then
-        jq -cn --argjson n "$CREAM_NEUTRALS" --argjson a "$CREAM_ACCENT" '$n + $a'
+# scheme_overrides <name>: the jq object of colour overrides for the current
+# theme - cream neutrals when in light mode (fixed or dynamic), plus the fixed
+# pink accent in Dark/Light ("custom" seed) mode. Empty object for dynamic-dark,
+# so every merge is a no-op there.
+scheme_overrides() {
+    local parts=()
+    [[ "$(mode)" == light ]] && parts+=("$CREAM_NEUTRALS")
+    [[ "$1" == custom ]] && parts+=("$PINK_ACCENT")
+    if [[ ${#parts[@]} -eq 0 ]]; then
+        echo '{}'
     else
-        echo "$CREAM_NEUTRALS"
+        printf '%s\n' "${parts[@]}" | jq -cs 'add'
     fi
 }
 
 # finalize_scheme <staging file> <name> [dest]
-# Patch metadata (and, in light mode, the cream palette) into a rendered
+# Patch metadata (and the fixed-theme colour overrides) into a rendered
 # template. With no dest, print to stdout.
 finalize_scheme() {
     local staging="$1" name="$2" dest="${3:-}"
     local patched
     patched="$(jq --arg name "$name" --arg mode "$(mode)" \
-        --argjson cream "$(cream_overrides "$name")" \
-        '.name = $name | .flavour = "" | .mode = $mode | .colours += $cream' "$staging")"
+        --argjson over "$(scheme_overrides "$name")" \
+        '.name = $name | .flavour = "" | .mode = $mode | .colours += $over' "$staging")"
     if [[ -n "$dest" ]]; then
         printf '%s\n' "$patched" > "$dest.tmp" && mv "$dest.tmp" "$dest"
     else
@@ -80,18 +89,21 @@ finalize_scheme() {
     fi
 }
 
-# In light mode, overwrite the same neutral roles in the matugen-rendered
-# hypr/scheme/current.lua so window borders/gaps stay coherent with the cream
-# shell (matugen renders it with its own seed-tinted light neutrals). The key
-# anchor (name + "=") keeps `surface` from matching surfaceContainer/Variant/
-# Tint, and `primary` from matching primaryContainer/onPrimary.
-apply_cream_to_hypr() {
-    [[ "$(mode)" == light && -f "$HYPR_SCHEME" ]] || return 0
-    local name key val
+# Overwrite the same overridden roles in the matugen-rendered
+# hypr/scheme/current.lua so window borders/gaps match the shell (matugen
+# renders it with its own seed-tinted colours). Runs whenever the overrides are
+# non-empty: pink border in Dark, cream + pink in Light. The key anchor
+# (name + "=") keeps `surface` from matching surfaceContainer/Variant/Tint, and
+# `primary` from matching primaryContainer/onPrimary.
+apply_overrides_to_hypr() {
+    [[ -f "$HYPR_SCHEME" ]] || return 0
+    local name over key val
     name="$([[ -s "$SEED_FILE" ]] && echo custom || echo dynamic)"
+    over="$(scheme_overrides "$name")"
+    [[ "$over" == '{}' ]] && return 0
     while IFS=$'\t' read -r key val; do
         sed -i -E "s/^([[:space:]]*${key}[[:space:]]*=[[:space:]]*\")[0-9a-fA-F]+(\")/\1${val}\2/" "$HYPR_SCHEME"
-    done < <(cream_overrides "$name" | jq -r 'to_entries[] | "\(.key)\t\(.value)"')
+    done < <(printf '%s' "$over" | jq -r 'to_entries[] | "\(.key)\t\(.value)"')
 }
 
 # regenerate colors + all templates from current seed or wallpaper
@@ -105,7 +117,7 @@ regenerate() {
         matugen image "$(cat "$PATH_FILE")" -m "$(mode)" --source-color-index 0
         finalize_scheme "$STAGING_FILE" dynamic "$SCHEME_FILE"
     fi
-    apply_cream_to_hypr
+    apply_overrides_to_hypr
     # hypr/scheme/current.lua changed; hyprland only watches its main config
     [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && hyprctl reload >/dev/null 2>&1 || true
 }

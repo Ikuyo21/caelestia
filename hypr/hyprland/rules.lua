@@ -77,6 +77,11 @@ hl.window_rule({
 -- Steam
 hl.window_rule({ match = { class = "steam" }, rounding = 10 })
 
+-- Terminal: explicitly rounded (slightly more than the global
+-- vars.windowRounding), on top of its blur/transparency treatment - and
+-- independent of it, so tuning the global never squares the terminal off
+hl.window_rule({ match = { class = "Alacritty" }, rounding = 20 })
+
 -- Picture in picture (resize and move done via script)
 hl.window_rule({
     match             = { title = "Picture(-| )in(-| )[Pp]icture" },
